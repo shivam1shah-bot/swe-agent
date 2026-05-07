@@ -404,7 +404,7 @@ class AutonomousAgentTool(BaseTool):
         """
         import subprocess as _subprocess
 
-        skills_repo_url = "https://github.com/razorpay/agent-skills"
+        skills_repo_url = "https://github.com/shivam1shah-bot/agent-skills"
         os.makedirs(target_dir, exist_ok=True)
 
         # Filter to only skills not already installed

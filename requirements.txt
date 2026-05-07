@@ -105,6 +105,5 @@ croniter>=2.0.0
 # Slack integration
 slack_sdk>=3.0.0           # Slack Web API + Socket Mode client
 
-# PR Review Prompts (from razorpay/ai-pr-reviewer)
-# Uses HTTPS with GITHUB_TOKEN for authentication (set as build arg in Dockerfile)
-git+https://github.com/razorpay/ai-pr-reviewer.git@feature/pr-prompt-kit-package#egg=ai-pr-reviewer
+# PR Review Prompts (private package - disabled, inaccessible outside Razorpay org)
+# git+https://github.com/razorpay/ai-pr-reviewer.git@feature/pr-prompt-kit-package#egg=ai-pr-reviewer

@@ -31,7 +31,7 @@ RUN --mount=type=secret,id=github_token,required=false \
         export GITHUB_TOKEN=$(cat /run/secrets/github_token); \
     fi && \
     if [ -n "$GITHUB_TOKEN" ]; then \
-        sed "s|https://github.com/razorpay/ai-pr-reviewer|https://x-access-token:${GITHUB_TOKEN}@github.com/razorpay/ai-pr-reviewer|g" requirements.txt > /tmp/requirements_auth.txt && \
+        sed "s|https://github.com/shivam1shah-bot/ai-pr-reviewer|https://x-access-token:${GITHUB_TOKEN}@github.com/shivam1shah-bot/ai-pr-reviewer|g" requirements.txt > /tmp/requirements_auth.txt && \
         uv pip install --system -r /tmp/requirements_auth.txt && \
         rm /tmp/requirements_auth.txt; \
     else \
