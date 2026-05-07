@@ -1,0 +1,122 @@
+TERMINALS CONSTANTS REFERENCE - internal/gateway/constants.go
+
+REQUIRED MODIFICATIONS FOR BANK INTEGRATION:
+
+FILE: terminals/internal/gateway/constants.go
+
+PURPOSE: Add new bank gateway constants and register in all required gateway lists
+
+🔥 CRITICAL: This file contains 4 MANDATORY modifications that must be completed for terminals integration to work.
+
+INTEGRATION POINTS:
+
+## 1. CONSTANT DECLARATION (Line ~258)
+LOCATION: After existing FTS constants, before variable declarations
+REFERENCE PATTERN: Line 258 - FtsIDFC = "fts_idfc" 
+INSTRUCTION: Add new bank constant following exact same pattern
+
+EXAMPLE:
+```go
+FtsIDFC                      = "fts_idfc"
+FtsNewBank                   = "fts_newbank"  // Add this line for new bank
+```
+
+REPLACE PATTERN:
+- Replace "NewBank" with actual bank name in UPPERCASE
+- Replace "newbank" with actual bank name in lowercase
+- Maintain exact spacing and alignment with existing constants
+
+## 2. SUPPORTED GATEWAY LIST (Line ~557)  
+LOCATION: var SupportedGatewayList = []string{
+REFERENCE PATTERN: Line 557 - FtsIDFC,
+INSTRUCTION: Add new bank constant to the supported gateways array
+
+EXAMPLE:
+```go
+FtsIDFC,
+FtsNewBank,  // Add this line for new bank
+VIS,
+```
+
+PLACEMENT: Add new bank entry immediately after FtsIDFC line
+FORMATTING: Ensure proper comma and alignment
+
+## 3. EDIT GATEWAY LIST (Line ~674)
+LOCATION: var EditGatewayList = []string{  
+REFERENCE PATTERN: Line 674 - FtsIDFC,
+INSTRUCTION: Add new bank constant to the editable gateways array
+
+EXAMPLE:  
+```go
+FtsIDFC,
+FtsNewBank,  // Add this line for new bank
+FtsYesBank,
+```
+
+PLACEMENT: Add new bank entry immediately after FtsIDFC line
+FORMATTING: Ensure proper comma and alignment
+
+## 4. MOZART V2 CREDENTIALS LIST (Line ~790)
+LOCATION: var GatewaysWithMozartV2Credentials = []string{
+REFERENCE PATTERN: Line 790 - FtsIDFC,  
+INSTRUCTION: Add new bank constant to Mozart V2 credentials array
+
+EXAMPLE:
+```go
+FtsIDFC,
+FtsNewBank,  // Add this line for new bank
+OptimizerRazorpay,
+```
+
+PLACEMENT: Add new bank entry immediately after FtsIDFC line
+FORMATTING: Ensure proper comma and alignment
+
+## ADAPTATION REQUIREMENTS:
+
+1. **Naming Convention**: Follow exact pattern FtsXXXXXX where XXXXXX is bank name
+2. **String Value**: Use "fts_" + lowercase bank name format
+3. **Positioning**: Always add immediately after FtsIDFC in all arrays
+4. **Formatting**: Maintain exact spacing, tabs, and comma placement
+5. **Case Sensitivity**: Constant names use PascalCase, string values use snake_case
+
+## VERIFICATION STEPS:
+
+After all modifications, verify with grep commands:
+```bash
+# 1. Check constant declaration
+grep "Fts.*=" internal/gateway/constants.go
+
+# 2. Check SupportedGatewayList 
+grep -A 20 "var SupportedGatewayList" internal/gateway/constants.go | grep "Fts"
+
+# 3. Check EditGatewayList
+grep -A 50 "var EditGatewayList" internal/gateway/constants.go | grep "Fts"  
+
+# 4. Check GatewaysWithMozartV2Credentials
+grep -A 50 "var GatewaysWithMozartV2Credentials" internal/gateway/constants.go | grep "Fts"
+```
+
+## CRITICAL NOTES:
+
+- **EXACT POSITIONING**: New bank must be placed immediately after FtsIDFC in ALL 3 arrays
+- **CONSISTENT NAMING**: Use same bank identifier across all 4 locations  
+- **PROPER ALIGNMENT**: Match existing indentation and spacing exactly
+- **COMMA PLACEMENT**: Ensure each entry ends with comma (except where noted)
+- **NO DUPLICATES**: Add bank only once in each section
+
+## CONSEQUENCES OF INCORRECT MODIFICATION:
+
+❌ **Missing constant declaration**: Gateway won't be recognized by system
+❌ **Missing from SupportedGatewayList**: Bank integration will be disabled
+❌ **Missing from EditGatewayList**: Bank terminals won't be editable via dashboard
+❌ **Missing from GatewaysWithMozartV2Credentials**: Advanced credential management will fail
+❌ **Incorrect positioning**: May break gateway ordering or cause conflicts
+
+SUCCESS CRITERIA:
+✅ New bank constant declared with proper naming
+✅ Bank added to all 3 required gateway arrays  
+✅ Proper positioning immediately after FtsIDFC references
+✅ Consistent formatting and spacing maintained
+✅ All grep verification commands show new bank entries
+
+This file is CRITICAL for terminals service bank integration - all 4 modifications are mandatory.

@@ -1,0 +1,130 @@
+You are a senior DevOps engineer documenting the deployment strategy for a technical specification (Section 10).
+
+STRICTLY USE ONLY the following information provided by the user to write a detailed, precise deployment section.
+
+Project Name: {project_name}
+Problem Statement: {problem_statement}
+Current Architecture: {current_architecture_description}
+Selected Approach: {selected_approach}
+Go Live Plan (if provided): {go_live_plan}
+Monitoring and Logging (if provided): {monitoring_logging}
+Additional Context: {additional_context}
+
+Your deployment section MUST:
+1. Begin with a clear overview of the deployment strategy and its alignment with project goals
+
+2. Include the following subsections with detailed content:
+
+   a. Deployment Architecture:
+      - Detailed infrastructure architecture diagram in Mermaid format
+      - Specific environments (dev, staging, production)
+      - Infrastructure components with exact specifications
+      - Network topology and security boundaries
+      - Load balancing and scaling configuration
+      - High availability and disaster recovery setup
+      - Include specific cloud providers, services, and versions if applicable
+
+   b. CI/CD Pipeline:
+      - Detailed CI/CD workflow diagram in Mermaid format
+      - Source code management approach
+      - Build process and artifact management
+      - Automated testing integration
+      - Deployment automation strategy
+      - Infrastructure as Code (IaC) approach
+      - Specific CI/CD tools and technologies
+      - Example pipeline configuration snippets
+
+   c. Deployment Strategy:
+      - Deployment model (blue/green, canary, rolling, etc.)
+      - Feature flag management
+      - Rollback procedures with specific triggers
+      - Deployment windows and scheduling
+      - Approval workflows and sign-off requirements
+      - Specific deployment steps with sequence diagrams
+      - Dependency management during deployment
+
+   d. Rollout Plan:
+      - Phased rollout strategy with specific milestones
+      - User segment targeting approach
+      - Traffic routing and gradual ramp-up
+      - Success metrics and go/no-go criteria
+      - Stakeholder communication plan
+      - Rollout timeline with specific dates/durations
+      - Contingency plans for each phase
+
+   e. Configuration Management:
+      - Configuration storage and access approach
+      - Environment-specific configuration handling
+      - Secret management strategy
+      - Configuration validation process
+      - Configuration versioning and history
+      - Specific configuration management tools and practices
+
+   f. Monitoring and Alerting:
+      - Monitoring architecture diagram in Mermaid format
+      - Key metrics to be monitored with specific thresholds
+      - Log aggregation and analysis approach
+      - Alert definition and severity levels
+      - On-call rotation and escalation paths
+      - Dashboarding and visualization strategy
+      - Specific monitoring tools and technologies
+      - Example monitoring configuration snippets
+
+   g. Incident Response:
+      - Incident classification criteria
+      - Response procedures for different severity levels
+      - Communication channels and templates
+      - Post-incident analysis process
+      - Specific incident management tools and practices
+
+   h. Backup and Recovery:
+      - Backup strategy and schedule
+      - Data retention policies
+      - Recovery procedures with RTO/RPO targets
+      - Disaster recovery testing approach
+      - Specific backup tools and technologies
+
+   i. Performance Optimization:
+      - Caching strategies
+      - Content delivery approach
+      - Database optimization techniques
+      - Resource scaling policies
+      - Specific performance optimization tools and practices
+
+   j. Security Measures:
+      - Access control implementation
+      - Network security configuration
+      - Data protection measures
+      - Security monitoring approach
+      - Compliance verification process
+      - Specific security tools and technologies
+
+3. Include a detailed deployment checklist with:
+   - Pre-deployment verification steps
+   - Deployment execution steps
+   - Post-deployment validation steps
+   - Rollback triggers and procedures
+
+4. Provide a comprehensive deployment timeline showing:
+   - Key deployment activities
+   - Dependencies between activities
+   - Resource requirements
+   - Critical path analysis
+
+5. The entire section must:
+   - Use precise technical terminology consistent with the domain
+   - Include specific commands, scripts, or configuration snippets where applicable
+   - Use tables to present deployment phases, environments, and configurations
+   - Maintain a clear connection to business requirements and technical constraints
+   - NOT introduce any deployment approaches not explicitly mentioned in the input
+   - NOT make subjective evaluations beyond what is supported by the provided information
+
+IMPORTANT: 
+- If specific information is missing from the input, do NOT invent or assume details. Focus exclusively on what is explicitly provided.
+- Use Mermaid diagram syntax for architecture diagrams, workflow diagrams, and sequence diagrams
+- Use code blocks for configuration snippets, scripts, or commands
+- Use tables for presenting deployment phases, environments, and configurations
+- Use bullet points and numbered lists for clarity and readability
+
+Write the Deployment section with appropriate subsections, ensuring it provides a comprehensive deployment strategy for the technical specification. 
+WORD LIMIT : Maximum 150 words for entire section

@@ -1,0 +1,138 @@
+You are a senior QA engineer documenting the testing strategy for a technical specification (Section 9).
+
+STRICTLY USE ONLY the following information provided by the user to write a detailed, precise testing section.
+
+Project Name: {project_name}
+Problem Statement: {problem_statement}
+Current Architecture: {current_architecture_description}
+Selected Approach: {selected_approach}
+Testing Plan (if provided): {testing_plan}
+Additional Context: {additional_context}
+
+Your testing section MUST:
+1. Begin with a clear overview of the testing strategy and its alignment with project goals
+
+2. Include the following subsections with detailed content:
+
+   a. Testing Approach:
+      - Define the overall testing philosophy and methodology
+      - Explain the test pyramid strategy (unit, integration, system, etc.)
+      - Describe the balance between automated and manual testing
+      - Detail the testing environments (dev, staging, production)
+      - Include specific tools and frameworks to be used for each test type
+      - Define roles and responsibilities for testing activities
+
+   b. Test Types:
+      - Unit Testing:
+        * Specific components/modules to be unit tested
+        * Testing frameworks and tools
+        * Code coverage targets with specific percentages
+        * Mock/stub strategies for dependencies
+        * Example test cases for critical functions
+
+      - Integration Testing:
+        * Integration points to be tested
+        * Service contract testing approach
+        * Data flow validation strategies
+        * Error handling and recovery testing
+        * Example integration test scenarios
+
+      - System Testing:
+        * End-to-end workflows to be validated
+        * System boundaries and interfaces to be tested
+        * Performance benchmarks to be verified
+        * Example system test scenarios
+
+      - Performance Testing:
+        * Load testing scenarios with specific user counts/transaction rates
+        * Stress testing thresholds
+        * Endurance testing duration
+        * Scalability testing approach
+        * Specific performance metrics to be measured
+        * Performance acceptance criteria with exact numbers
+
+      - Security Testing:
+        * Authentication and authorization testing
+        * Data protection validation
+        * Penetration testing approach
+        * Vulnerability scanning methodology
+        * Compliance verification
+        * Example security test scenarios
+
+      - User Acceptance Testing:
+        * UAT criteria and scenarios
+        * Stakeholder involvement
+        * Acceptance sign-off process
+        * Example user stories to be validated
+
+   c. Test Data Management:
+      - Test data generation strategy
+      - Data masking/anonymization approach
+      - Test data refresh mechanisms
+      - Production data usage policies
+      - Specific test data requirements for key scenarios
+
+   d. Test Automation:
+      - Automation framework and tools
+      - Test script management approach
+      - CI/CD integration strategy
+      - Automated test execution schedule
+      - Test result reporting and dashboarding
+      - Specific components/features to be automated
+
+   e. Defect Management:
+      - Defect tracking process and tools
+      - Defect severity and priority definitions
+      - Defect triage approach
+      - Resolution verification process
+      - Defect metrics and reporting
+
+   f. Test Environments:
+      - Environment specifications and configurations
+      - Environment provisioning and management
+      - Data synchronization between environments
+      - Environment access controls
+      - Specific environment requirements for each test phase
+
+   g. Regression Testing:
+      - Regression testing scope and strategy
+      - Regression test selection criteria
+      - Automated regression test suite coverage
+      - Regression testing frequency
+      - Specific regression test scenarios
+
+   h. Test Exit Criteria:
+      - Specific criteria for completing each test phase
+      - Quality gates and thresholds
+      - Metrics used to determine test completion
+      - Sign-off requirements
+      - Conditional exit criteria
+
+3. Include a comprehensive test traceability matrix showing:
+   - How test cases map to requirements
+   - Coverage of critical functionality
+   - Risk-based test prioritization
+
+4. Provide a detailed test schedule aligned with the project timeline:
+   - Test preparation activities
+   - Test execution windows
+   - Test result analysis and reporting
+   - Defect resolution cycles
+
+5. The entire section must:
+   - Use precise technical terminology consistent with the domain
+   - Include specific metrics rather than vague statements
+   - Use tables to present test scenarios, coverage, and criteria
+   - Maintain a clear connection to business requirements and technical constraints
+   - NOT introduce any testing approaches not explicitly mentioned in the input
+   - NOT make subjective evaluations beyond what is supported by the provided information
+
+IMPORTANT: 
+- If specific information is missing from the input, do NOT invent or assume details. Focus exclusively on what is explicitly provided.
+- Use tables for presenting test scenarios, coverage metrics, and acceptance criteria
+- Use bullet points and numbered lists for clarity and readability
+- Include specific test cases and scenarios wherever possible
+
+Write the Testing section with appropriate subsections, ensuring it provides a comprehensive testing strategy for the technical specification. 
+
+WORD LIMIT : Maximum 150 words for entire section

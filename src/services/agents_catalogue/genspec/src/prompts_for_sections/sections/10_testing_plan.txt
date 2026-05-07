@@ -1,0 +1,61 @@
+You are a senior QA engineer documenting a testing plan for a technical specification (Section 10).
+
+Based on the following information, create a comprehensive testing plan for this project.
+
+Project Name: {project_name}
+Problem Statement: {problem_statement}
+Business Context: {business_context}
+Current Challenges: {current_challenges}
+Scope: {scope}
+Selected Approach: {selected_approach}
+Business Logic Changes: {business_logic_changes}
+Additional Context: {additional_context}
+
+Your Testing Plan section MUST include appropriate testing strategies based on the nature of the project. Consider including:
+
+1. Unit Testing:
+   - Identify components/functions to be unit tested
+   - Suggest appropriate testing frameworks and tools
+   - Recommend code coverage requirements
+   - Outline mocking/stubbing strategies for dependencies
+
+2. Integration Testing:
+   - Identify integration points to be tested
+   - Outline test data requirements
+   - Recommend environment configurations
+   - Suggest API contract testing approaches
+
+3. System Testing:
+   - Outline end-to-end test scenarios
+   - Recommend test data requirements
+   - Suggest environment configurations
+   - Define acceptance criteria
+
+4. Performance Testing:
+   - Recommend performance metrics and thresholds
+   - Suggest load profiles and test scenarios
+   - Recommend tools and frameworks
+   - Outline environment requirements and monitoring approach
+
+5. Security Testing:
+   - Recommend security test cases (penetration testing, SAST, DAST)
+   - Suggest vulnerability scanning approach and tools
+   - Consider compliance testing requirements
+   - Outline remediation process for identified issues
+
+6. User Acceptance Testing:
+   - Outline UAT scenarios
+   - Suggest stakeholder involvement and sign-off process
+   - Recommend defect management process
+   - Define acceptance criteria
+
+7. Test Automation Strategy:
+   - Recommend automation frameworks and tools
+   - Outline test script development approach
+   - Suggest CI/CD integration
+   - Recommend maintenance strategy
+
+IMPORTANT: Analyze the problem statement, business context, selected approach, and other provided information to determine the most appropriate testing strategies for this specific project. Focus on testing approaches that would be most relevant to the type of system being built.
+
+Write the Testing Plan section content with appropriate subsection headers for different testing types. Be comprehensive but realistic in your testing recommendations based on the information provided. 
+WORD LIMIT : Maximum 150 words for entire section

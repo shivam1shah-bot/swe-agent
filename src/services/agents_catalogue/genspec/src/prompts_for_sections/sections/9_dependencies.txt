@@ -1,0 +1,45 @@
+You are a senior technical architect documenting feature dependencies and SLAs for a technical specification (Section 9).
+
+Based on the following information, identify and document all dependencies required for this project.
+
+Project Name: {project_name}
+Problem Statement: {problem_statement}
+Business Context: {business_context}
+Current Challenges: {current_challenges}
+Scope: {scope}
+Selected Approach: {selected_approach}
+Dependencies (if provided): {dependencies}
+External Services: {external_services}
+API Dependencies: {api_dependencies}
+SLA Requirements: {sla_requirements}
+Integration Points: {integration_points}
+Additional Context: {additional_context}
+
+Your Feature Dependencies & SLAs section MUST:
+1. Identify ALL external dependencies required for the project with technical precision
+2. Categorize dependencies by type (APIs, services, data sources, teams, etc.)
+3. For each dependency:
+   - Provide the name and purpose of the dependency
+   - Specify the owner or responsible team (if known)
+   - Define the SLA requirements with specific metrics (if applicable)
+   - Document integration methods and protocols
+   - Specify version requirements or compatibility constraints
+   - Note any special considerations or risks
+
+4. Identify critical path dependencies and their impact on the project timeline
+5. Present dependencies in a well-structured tabular format with columns for:
+   - Dependency Name
+   - Owner/Team
+   - SLA Requirements
+   - Integration Method
+   - Version/Compatibility
+   - Notes/Risks
+6. Present dependencies in a well-structured format
+
+IMPORTANT: Analyze the problem statement, business context, and selected approach to identify all likely dependencies. Based on the nature of the project, determine which external services, APIs, and systems would be required for implementation.
+
+Write the Feature Dependencies & SLAs section content with appropriate subsection headers. Be comprehensive but realistic in identifying dependencies based on the information provided.
+
+Write only the Feature Dependencies & SLAs section content, with appropriate subsection headers as needed. 
+
+WORD LIMIT : Maximum 150 words for entire section

@@ -1,0 +1,75 @@
+X-Balance Service - Transformer Factory Integration Reference
+===========================================================
+
+FILE: x-balances/internal/transformer/mozart/factory/transformer.go
+
+The factory provides the correct transformer instance based on the bank name.
+This is a central registry that maps bank names to their transformer implementations.
+
+REFERENCE PATTERN (Current banks: rbl, icici, axis, yesbank, idfc):
+
+=== IMPORT SECTION ===
+Add import for the new bank transformer:
+
+```go
+import (
+	"github.com/razorpay/goutils/errors"
+
+	"github.com/razorpay/x-balances/internal/transformer/mozart"
+	"github.com/razorpay/x-balances/internal/transformer/mozart/axis"
+	"github.com/razorpay/x-balances/internal/transformer/mozart/icici"
+	"github.com/razorpay/x-balances/internal/transformer/mozart/idfc"
+	"github.com/razorpay/x-balances/internal/transformer/mozart/rbl"
+	"github.com/razorpay/x-balances/internal/transformer/mozart/yesbank"
+	"github.com/razorpay/x-balances/internal/transformer/mozart/BANKNAME"  // ADD THIS
+)
+```
+
+=== FACTORY METHOD ===
+Add case for the new bank in GetTransformer method:
+
+```go
+// GetTransformer returns the appropriate transformer based on the bank
+func (f *TransformerFactory) GetTransformer(bank string) (mozart.MozartTransformer, errors.IError) {
+	switch bank {
+	case "rbl":
+		return rbl.NewRBLTransformer(), nil
+	case "icici":
+		return icici.NewICICITransformer(), nil
+	case "axis":
+		return axis.NewAxisTransformer(), nil
+	case "yesbank":
+		return yesbank.NewYesBankTransformer(), nil
+	case "idfc":
+		return idfc.NewIDFCTransformer(), nil
+	case "BANKNAME":  // ADD THIS CASE - use lowercase bank name
+		return BANKNAME.NewBANKNAMETransformer(), nil  // use package name and constructor
+
+	default:
+		return nil, errors.New("unsupported bank type")
+	}
+}
+```
+
+INTEGRATION RULES:
+1. Bank name string must be lowercase (e.g., "sbi", "hdfc", "kotak")
+2. Package import path must match: internal/transformer/mozart/BANKNAME
+3. Constructor function must follow pattern: NewBANKNAMETransformer()
+4. Constructor must return pointer to transformer struct
+5. Bank name must match channel enum string representation
+
+EXAMPLE FOR BANK "SBI":
+- Import: "github.com/razorpay/x-balances/internal/transformer/mozart/sbi"
+- Case: case "sbi":
+- Return: return sbi.NewSBITransformer(), nil
+
+VALIDATION:
+- Ensure bank name consistency across channel enum and factory
+- Test that transformer is properly instantiated
+- Verify constructor exists and returns correct interface
+- Check that import path is correct
+
+TESTING:
+- Add unit test case for the new bank in factory tests
+- Test error handling for unsupported banks
+- Verify transformer interface implementation

@@ -1,0 +1,39 @@
+## FTS internal/transfer/transfer_mode_processor.go Reference
+
+### 1. Add to AllowedModes struct after IDFC
+```go
+type AllowedModes struct {
+    // ... existing fields
+    IDFC    []string
+    NEWBANK []string  // Add after IDFC
+}
+```
+
+### 2. Add to getModeAndChannelByShortCode function after IDFB case
+```go
+switch strings.ToUpper(shortCode) {
+// ... existing cases
+case "IDFB":
+    return supportedModes, channel.IDFC
+case "NEWB":  // First 4 chars of bank name
+    return supportedModes, channel.NEWBANK
+}
+```
+
+### 3. Add to setMode function after IDFC case
+```go
+switch ch {
+// ... existing cases
+case channel.IDFC:
+    modesAllowed.IDFC = append(modesAllowed.IDFC, modes...)
+case channel.NEWBANK:
+    modesAllowed.NEWBANK = append(modesAllowed.NEWBANK, modes...)
+}
+```
+
+### Pattern Notes:
+- Replace "NEWBANK" with actual bank name (uppercase)
+- Replace "NEWB" with first 4 characters of bank name (uppercase)
+- Follow exact same patterns as IDFC
+- Add entries after IDFC case for consistency
+- Support all payment modes: IMPS, NEFT, RTGS, IFT, UPI

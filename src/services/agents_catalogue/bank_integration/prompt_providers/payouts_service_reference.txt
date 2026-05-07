@@ -1,0 +1,47 @@
+PAYOUTS SERVICE REFERENCE - Complete Integration Guide
+
+PAYOUTS SERVICE INTEGRATION REQUIREMENTS:
+
+The payouts service requires modifications to 4 key files following existing bank patterns (RBL, ICICI, YESBANK).
+
+FILES TO MODIFY:
+1. payouts/internal/app/common/appConstants/accounts.go
+2. payouts/internal/app/fundAccountCache/model_test.go  
+3. payouts/internal/app/payouts/mode.go
+4. payouts/internal/app/payouts/mode_test.go
+
+KEY PATTERNS TO FOLLOW:
+- Use RBL patterns for account mappings and IFSC configuration
+- Use ICICI patterns for test case structure in model_test.go
+- Use RBL patterns for mode configuration in mode.go
+- Use YESBANK patterns for validation test cases in mode_test.go
+
+BANK CONSTANT FORMAT:
+- Bank constants should be in UPPERCASE (e.g., appConstants.NEWBANK)
+- IFSC codes should follow standard format (e.g., "NEWB0000001")
+- Virtual account prefixes should be 4-6 digit strings
+
+SUPPORTED PAYMENT MODES:
+- BANK_ACCOUNT: RTGS, IMPS, NEFT, IFT
+- CARD: IMPS, NEFT, UPI
+- VPA: UPI
+- WALLET: AMAZONPAY (optional)
+
+ACCOUNT TYPES:
+- Shared: Standard shared account configurations
+- Direct: Direct account configurations (subset of Shared)
+
+INTEGRATION REQUIREMENTS:
+1. Virtual account prefix mapping for routing
+2. IFSC code mapping for bank identification
+3. Channel and mode validation support
+4. Test coverage for all supported combinations
+5. Both Shared and Direct account type support
+
+PURPOSE:
+The payouts service handles:
+- Fund disbursement to various account types
+- Channel-specific routing and validation
+- Mode-specific processing logic
+- Virtual account management
+- Test validation for all supported scenarios

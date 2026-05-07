@@ -1,0 +1,114 @@
+X-Balance Service - Worker Registration Reference
+================================================
+
+The worker registration integrates the new bank's job handlers into the application startup.
+This involves changes in both worker and server main files.
+
+=== FILE: cmd/worker/main.go ===
+
+REFERENCE PATTERN (Current banks: icici, axis, yesbank, rbl, idfc):
+
+1. ADD IMPORT:
+```go
+import (
+	// ... existing imports
+	"github.com/razorpay/x-balances/internal/job/balanceFetch/axis"
+	"github.com/razorpay/x-balances/internal/job/balanceFetch/icici"
+	"github.com/razorpay/x-balances/internal/job/balanceFetch/idfc"
+	"github.com/razorpay/x-balances/internal/job/balanceFetch/rbl"
+	"github.com/razorpay/x-balances/internal/job/balanceFetch/yesbank"
+	"github.com/razorpay/x-balances/internal/job/balanceFetch/BANKNAME"  // ADD THIS
+)
+```
+
+2. ADD INITIALIZATION CALL:
+```go
+// In main() function, after balance fetch service creation:
+
+// TODO : register job handlers HERE!!!
+payout_events_job.RegisterHandlers(payoutEventService)
+account_activation.RegisterHandlers(accountActivationEventService)
+
+_ = bootstrapWorker.InitWorker(ctx, *config)
+pocworker.Initialise()
+icici.Initialise()
+axis.Initialise()
+yesbank.Initialise()
+rbl.Initialise()
+idfc.Initialise()
+BANKNAME.Initialise()  // ADD THIS LINE
+account_activation.Initialize()
+```
+
+3. ADD HANDLER REGISTRATION (after server creation, before server start):
+```go
+// Register job handlers with services
+icici.RegisterHandler(balanceFetchService)
+axis.RegisterHandler(balanceFetchService)  
+yesbank.RegisterHandler(balanceFetchService)
+rbl.RegisterHandler(balanceFetchService)
+idfc.RegisterHandler(balanceFetchService)
+BANKNAME.RegisterHandler(balanceFetchService)  // ADD THIS LINE
+```
+
+=== FILE: cmd/server/main.go ===
+
+NOTE: Server main.go typically doesn't require job initialization since it's not processing queue jobs.
+However, if the server needs to dispatch jobs, add similar imports and registrations.
+
+INTEGRATION SEQUENCE:
+1. Import the job package
+2. Call Initialise() to register job with worker  
+3. Call RegisterHandler() to inject balance fetch service
+
+EXAMPLE FOR BANK "SBI":
+
+Import:
+```go
+"github.com/razorpay/x-balances/internal/job/balanceFetch/sbi"
+```
+
+Initialization:
+```go
+sbi.Initialise()
+```
+
+Handler Registration:
+```go
+sbi.RegisterHandler(balanceFetchService)
+```
+
+STARTUP SEQUENCE:
+1. Load configuration
+2. Create services (storage, mozart, cache, balance fetch)
+3. Initialize worker framework
+4. Register all job types (including new bank)
+5. Register job handlers with services
+6. Start worker/server
+
+ERROR HANDLING:
+- job.Initialise() will log.Fatal on registration errors
+- Ensure job package compiles without errors
+- Verify job configuration is valid
+- Test job registration during startup
+
+TESTING:
+- Test application startup with new bank job
+- Verify job is registered with correct queue names
+- Test job handler receives balance fetch service
+- Validate job processing works end-to-end
+
+VALIDATION CHECKLIST:
+□ Import path is correct
+□ Package name matches directory name  
+□ Initialise() function exists in job package
+□ RegisterHandler() function exists in job package
+□ Job configuration (queue names, timeouts) is valid
+□ Balance fetch service injection works
+□ Application starts without errors
+
+MONITORING:
+- Check worker logs for job registration confirmations
+- Monitor queue metrics for new bank queues
+- Verify jobs are being processed from new queues
+- Check error rates for new bank job processing

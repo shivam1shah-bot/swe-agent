@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>rCoRe — Razorpay Code Review Demo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-dark: #0D1117;
+    --bg-card: #161B22;
+    --bg-diff: #1C2128;
+    --border: rgba(48, 54, 61, 0.8);
+    --text-primary: #E6EDF3;
+    --text-muted: #8B949E;
+    --blue: #58A6FF;
+    --green: #3FB950;
+    --red: #F85149;
+    --yellow: #D29922;
+    --orange: #F0883E;
+    --purple: #BC8CFF;
+    --diff-add-bg: rgba(63, 185, 80, 0.15);
+    --diff-del-bg: rgba(248, 81, 73, 0.15);
+    --diff-add-line: rgba(63, 185, 80, 0.3);
+    --diff-del-line: rgba(248, 81, 73, 0.3);
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  .demo-container {
+    width: 920px;
+    height: 560px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: var(--bg-dark);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+  }
+
+  /* Window chrome */
+  .window-chrome {
+    height: 38px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 8px;
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-red { background: #F85149; }
+  .dot-yellow { background: #D29922; }
+  .dot-green { background: #3FB950; }
+
+  /* Scenes */
+  .scene {
+    position: absolute;
+    top: 38px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+    overflow: hidden;
+  }
+  .scene.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* ===== SCENE 1: GitHub PR page ===== */
+  .gh-header {
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 24px;
+  }
+  .gh-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .gh-title .pr-num { color: var(--text-muted); font-weight: 400; }
+  .gh-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+  }
+  .gh-badge {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-open { background: rgba(63, 185, 80, 0.15); color: var(--green); border: 1px solid rgba(63, 185, 80, 0.3); }
+  .badge-merged { background: rgba(188, 140, 255, 0.15); color: var(--purple); border: 1px solid rgba(188, 140, 255, 0.3); }
+  .gh-tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 24px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+  }
+  .gh-tab {
+    padding: 8px 16px;
+    font-size: 12px;
+    color: var(--text-muted);
+    border-bottom: 2px solid transparent;
+  }
+  .gh-tab.active {
+    color: var(--text-primary);
+    border-bottom-color: var(--orange);
+  }
+  .gh-tab .count {
+    background: rgba(110, 118, 129, 0.3);
+    padding: 0 6px;
+    border-radius: 10px;
+    font-size: 10px;
+    margin-left: 4px;
+  }
+
+  .gh-body {
+    padding: 20px 24px;
+    overflow: hidden;
+    height: calc(100% - 120px);
+  }
+
+  /* Webhook notification */
+  .webhook-notification {
+    background: rgba(88, 166, 255, 0.08);
+    border: 1px solid rgba(88, 166, 255, 0.2);
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.4s ease;
+  }
+  .webhook-notification.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .webhook-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(88, 166, 255, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .webhook-text { font-size: 12px; }
+  .webhook-text strong { color: var(--blue); }
+
+  /* ===== SCENE 2: Analysis in progress ===== */
+  .analysis-container {
+    padding: 24px;
+  }
+  .analysis-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .analysis-header-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(240, 136, 62, 0.15);
+    border: 1px solid rgba(240, 136, 62, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+  .analysis-title { font-size: 16px; font-weight: 700; }
+  .analysis-sub { font-size: 11px; color: var(--text-muted); }
+
+  /* Sub-agent grid */
+  .agent-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .agent-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transform: translateX(-8px);
+    transition: all 0.3s ease;
+  }
+  .agent-card.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .agent-card.done { border-color: rgba(63, 185, 80, 0.3); }
+  .agent-card.running { border-color: rgba(88, 166, 255, 0.3); }
+  .agent-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .agent-dot.pending { background: var(--text-muted); }
+  .agent-dot.running { background: var(--blue); animation: pulse-agent 1s infinite; }
+  .agent-dot.done { background: var(--green); }
+  @keyframes pulse-agent {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(88,166,255,0.4); }
+    50% { box-shadow: 0 0 0 4px rgba(88,166,255,0); }
+  }
+  .agent-name { font-size: 12px; font-weight: 500; flex: 1; }
+  .agent-status { font-size: 10px; color: var(--text-muted); }
+  .agent-count {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-weight: 600;
+  }
+  .count-bug { background: rgba(248, 81, 73, 0.15); color: var(--red); }
+  .count-sec { background: rgba(210, 153, 34, 0.15); color: var(--yellow); }
+  .count-qual { background: rgba(88, 166, 255, 0.15); color: var(--blue); }
+  .count-ok { background: rgba(63, 185, 80, 0.1); color: var(--green); }
+
+  /* Filter bar */
+  .filter-bar {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 11px;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .filter-bar.visible { opacity: 1; }
+  .filter-label { color: var(--text-muted); }
+  .filter-arrow { color: var(--text-muted); }
+  .filter-value { font-weight: 600; }
+  .filter-value.red { color: var(--red); }
+  .filter-value.green { color: var(--green); }
+
+  /* Severity badge */
+  .severity-bar {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 11px;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .severity-bar.visible { opacity: 1; }
+  .severity-badge {
+    padding: 2px 10px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 11px;
+  }
+  .severity-medium { background: rgba(210, 153, 34, 0.2); color: var(--yellow); border: 1px solid rgba(210, 153, 34, 0.3); }
+
+  /* ===== SCENE 3: Review posted on GitHub ===== */
+  .review-container {
+    padding: 20px 24px;
+    overflow-y: auto;
+    height: 100%;
+  }
+
+  /* Bot comment */
+  .bot-comment {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 14px;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all 0.4s ease;
+  }
+  .bot-comment.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .bot-comment-header {
+    background: var(--bg-card);
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .bot-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--orange), #E05D44);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 700;
+    color: white;
+  }
+  .bot-name { font-weight: 600; }
+  .bot-badge {
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 8px;
+    background: rgba(110, 118, 129, 0.2);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+  }
+  .bot-comment-body { padding: 12px 14px; font-size: 12px; line-height: 1.6; }
+
+  /* Diff block in review */
+  .diff-block {
+    background: var(--bg-diff);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin: 10px 0;
+    overflow: hidden;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+  }
+  .diff-file-header {
+    background: rgba(110, 118, 129, 0.1);
+    padding: 6px 12px;
+    font-size: 11px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .diff-line {
+    padding: 1px 12px;
+    display: flex;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+  .diff-line.visible { opacity: 1; }
+  .diff-line.add { background: var(--diff-add-bg); }
+  .diff-line.del { background: var(--diff-del-bg); }
+  .diff-line-num {
+    color: var(--text-muted);
+    min-width: 28px;
+    text-align: right;
+    user-select: none;
+    opacity: 0.5;
+  }
+  .diff-line-content { flex: 1; white-space: pre; }
+  .diff-line.add .diff-line-content { color: var(--green); }
+  .diff-line.del .diff-line-content { color: var(--red); }
+
+  /* Suggestion comment */
+  .suggestion-text {
+    margin-bottom: 8px;
+  }
+  .suggestion-text strong { color: var(--text-primary); }
+  .suggestion-tag {
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    margin-left: 4px;
+  }
+  .tag-bug { background: rgba(248, 81, 73, 0.15); color: var(--red); }
+  .tag-security { background: rgba(210, 153, 34, 0.15); color: var(--yellow); }
+  .tag-quality { background: rgba(88, 166, 255, 0.15); color: var(--blue); }
+
+  .suggested-fix-toggle {
+    font-size: 11px;
+    color: var(--text-muted);
+    cursor: pointer;
+    margin-top: 6px;
+  }
+
+  /* Summary comment */
+  .summary-section { margin-bottom: 10px; }
+  .summary-title { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .summary-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-right: 14px;
+    font-size: 11px;
+  }
+  .summary-stat .num { font-weight: 700; font-size: 16px; }
+
+  /* Resolution guideline */
+  .resolution-note {
+    background: rgba(210, 153, 34, 0.06);
+    border: 1px solid rgba(210, 153, 34, 0.2);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 10px;
+  }
+  .resolution-note strong { color: var(--yellow); }
+
+  /* Replay */
+  .replay-hint {
+    position: absolute;
+    bottom: 10px;
+    right: 14px;
+    font-size: 10px;
+    color: var(--text-muted);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    cursor: pointer;
+    z-index: 10;
+  }
+  .replay-hint.visible { opacity: 0.6; }
+  .replay-hint:hover { opacity: 1; }
+
+  /* Spinning loader */
+  .spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--blue);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="demo-container" id="demo">
+  <div class="window-chrome">
+    <div class="dot dot-red"></div>
+    <div class="dot dot-yellow"></div>
+    <div class="dot dot-green"></div>
+  </div>
+
+  <!-- SCENE 1: PR opened, webhook fires -->
+  <div class="scene active" id="scene-pr">
+    <div class="gh-header">
+      <div class="gh-title">Feat: Add Slack integration and Socket Mode <span class="pr-num">#260</span></div>
+      <div class="gh-meta">
+        <span class="gh-badge badge-open" id="pr-badge">Open</span>
+        <span style="color:var(--text-muted);font-size:11px">arnavgaur2104 wants to merge 12 commits into <code style="background:rgba(88,166,255,0.1);padding:1px 5px;border-radius:4px;color:var(--blue);font-size:10px">master</code> from <code style="background:rgba(188,140,255,0.1);padding:1px 5px;border-radius:4px;color:var(--purple);font-size:10px">feature/swe-agent-trigger-from-slack</code></span>
+      </div>
+    </div>
+    <div class="gh-tabs">
+      <div class="gh-tab active">Conversation <span class="count" id="conv-count">1</span></div>
+      <div class="gh-tab">Commits <span class="count">12</span></div>
+      <div class="gh-tab">Checks <span class="count">34</span></div>
+      <div class="gh-tab">Files changed <span class="count">14</span></div>
+    </div>
+    <div class="gh-body">
+      <div class="webhook-notification" id="webhook-notif">
+        <div class="webhook-icon">🔔</div>
+        <div class="webhook-text">
+          <strong>rzp-code-review</strong> bot triggered via GitHub webhook<br>
+          <span style="color:var(--text-muted)">Analyzing 14 files changed, +1,533 -5 lines</span>
+        </div>
+        <div class="spinner" id="webhook-spinner"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCENE 2: Analysis running -->
+  <div class="scene" id="scene-analysis">
+    <div class="analysis-container">
+      <div class="analysis-header">
+        <div class="analysis-header-icon">🔍</div>
+        <div>
+          <div class="analysis-title">rCoRe — Analyzing PR #260</div>
+          <div class="analysis-sub">razorpay/swe-agent · feature/swe-agent-trigger-from-slack → master</div>
+        </div>
+      </div>
+
+      <div class="agent-grid" id="agent-grid">
+        <div class="agent-card" id="agent-bug">
+          <div class="agent-dot pending" id="dot-bug"></div>
+          <div class="agent-name">🐛 Bug Detection</div>
+          <div class="agent-status" id="status-bug">waiting</div>
+        </div>
+        <div class="agent-card" id="agent-security">
+          <div class="agent-dot pending" id="dot-security"></div>
+          <div class="agent-name">🔒 Security</div>
+          <div class="agent-status" id="status-security">waiting</div>
+        </div>
+        <div class="agent-card" id="agent-quality">
+          <div class="agent-dot pending" id="dot-quality"></div>
+          <div class="agent-name">✨ Code Quality</div>
+          <div class="agent-status" id="status-quality">waiting</div>
+        </div>
+        <div class="agent-card" id="agent-style">
+          <div class="agent-dot pending" id="dot-style"></div>
+          <div class="agent-name">🎨 Style</div>
+          <div class="agent-status" id="status-style">waiting</div>
+        </div>
+        <div class="agent-card" id="agent-i18n">
+          <div class="agent-dot pending" id="dot-i18n"></div>
+          <div class="agent-name">🌐 i18n</div>
+          <div class="agent-status" id="status-i18n">waiting</div>
+        </div>
+        <div class="agent-card" id="agent-premortem">
+          <div class="agent-dot pending" id="dot-premortem"></div>
+          <div class="agent-name">⚡ Pre-Mortem</div>
+          <div class="agent-status" id="status-premortem">waiting</div>
+        </div>
+      </div>
+
+      <div class="filter-bar" id="filter-bar">
+        <span class="filter-label">Filter Layer:</span>
+        <span class="filter-value" id="filter-found">—</span>
+        <span class="filter-arrow">→</span>
+        <span class="filter-label">LLM scored</span>
+        <span class="filter-arrow">→</span>
+        <span class="filter-value" id="filter-kept">—</span>
+        <span class="filter-label">kept (score ≥ 5)</span>
+      </div>
+
+      <div class="severity-bar" id="severity-bar">
+        <span style="font-size:12px">📊</span>
+        <span class="filter-label">Severity:</span>
+        <span class="severity-badge severity-medium" id="severity-badge" style="opacity:0">MEDIUM</span>
+        <span class="filter-label" id="severity-conf" style="opacity:0">confidence 0.87</span>
+        <span style="flex:1"></span>
+        <span class="filter-label" id="severity-action" style="opacity:0">→ COMMENT (manual review required)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCENE 3: Review posted -->
+  <div class="scene" id="scene-review">
+    <div class="review-container" id="review-container">
+
+      <!-- Summary comment -->
+      <div class="bot-comment" id="comment-summary">
+        <div class="bot-comment-header">
+          <div class="bot-avatar">rC</div>
+          <span class="bot-name">rzp-code-review</span>
+          <span class="bot-badge">bot</span>
+          <span style="color:var(--text-muted);font-size:11px;margin-left:auto">just now</span>
+        </div>
+        <div class="bot-comment-body">
+          <div class="summary-section">
+            <div class="summary-title">AI Code Review</div>
+            <div style="margin-bottom:8px">
+              <span class="summary-stat"><span class="num" style="color:var(--red)">2</span> bugs</span>
+              <span class="summary-stat"><span class="num" style="color:var(--yellow)">1</span> security</span>
+              <span class="summary-stat"><span class="num" style="color:var(--blue)">3</span> code quality</span>
+              <span class="summary-stat"><span class="num" style="color:var(--green)">0</span> style</span>
+            </div>
+            <div style="font-size:11px;color:var(--text-muted)">Found <strong style="color:var(--text-primary)">6</strong> inline suggestions across <strong style="color:var(--text-primary)">4</strong> files.</div>
+          </div>
+          <div class="resolution-note">
+            <strong>⚠️ Comment Resolution Guidelines</strong> — AI suggestions require resolution before merge · 3 steps: React → Reply → Resolve
+          </div>
+        </div>
+      </div>
+
+      <!-- Inline comment 1: BUG -->
+      <div class="bot-comment" id="comment-bug">
+        <div class="bot-comment-header">
+          <div class="bot-avatar">rC</div>
+          <span class="bot-name">rzp-code-review</span>
+          <span class="bot-badge">bot</span>
+          <span style="font-size:11px;color:var(--text-muted);margin-left:auto">src/api/api.py</span>
+        </div>
+        <div class="bot-comment-body">
+          <div class="diff-block">
+            <div class="diff-file-header">Comment on lines +243 to +251</div>
+            <div class="diff-line add" id="d1"><span class="diff-line-num">243</span><span class="diff-line-content">+        app_token = config.get("slack", {}).get("app_token", "").strip()</span></div>
+            <div class="diff-line add" id="d2"><span class="diff-line-num">244</span><span class="diff-line-content">+        bot_token = config.get("slack", {}).get("bot_token", "").strip()</span></div>
+            <div class="diff-line add" id="d3"><span class="diff-line-num">245</span><span class="diff-line-content">+        if app_token:</span></div>
+            <div class="diff-line add" id="d4"><span class="diff-line-num">246</span><span class="diff-line-content">+            from src.providers.slack.socket_mode import start_socket_mode</span></div>
+            <div class="diff-line add" id="d5"><span class="diff-line-num">247</span><span class="diff-line-content">+            sm_started = start_socket_mode(bot_token=bot_token, app_token=</span></div>
+          </div>
+          <div class="suggestion-text">
+            <strong>Suggestion:</strong> Don't start Socket Mode when the bot token is missing — require both tokens and log an explicit warning to avoid starting with an empty bot token which will cause runtime errors. <span class="suggestion-tag tag-bug">BUG, importance: 9</span>
+          </div>
+          <div class="suggested-fix-toggle">▶ 💡 View suggested fix (click to expand)</div>
+        </div>
+      </div>
+
+      <!-- Inline comment 2: SECURITY -->
+      <div class="bot-comment" id="comment-sec">
+        <div class="bot-comment-header">
+          <div class="bot-avatar">rC</div>
+          <span class="bot-name">rzp-code-review</span>
+          <span class="bot-badge">bot</span>
+          <span style="font-size:11px;color:var(--text-muted);margin-left:auto">src/api/middleware/basic_auth.py</span>
+        </div>
+        <div class="bot-comment-body">
+          <div class="diff-block">
+            <div class="diff-file-header">Comment on lines +18 to +24</div>
+            <div class="diff-line add" id="s1"><span class="diff-line-num">18</span><span class="diff-line-content">+    SLACK_SIGNING_SECRET = config.get("slack_signing_secret", "")</span></div>
+            <div class="diff-line add" id="s2"><span class="diff-line-num">19</span><span class="diff-line-content">+    if not hmac.compare_digest(expected_sig, request_sig):</span></div>
+          </div>
+          <div class="suggestion-text">
+            <strong>Suggestion:</strong> Validate that <code style="background:rgba(110,118,129,0.2);padding:1px 4px;border-radius:3px;font-size:11px">SLACK_SIGNING_SECRET</code> is not empty before using it for signature verification — an empty secret would make all signatures pass validation. <span class="suggestion-tag tag-security">SECURITY, importance: 8</span>
+          </div>
+          <div class="suggested-fix-toggle">▶ 💡 View suggested fix (click to expand)</div>
+        </div>
+      </div>
+
+      <!-- Inline comment 3: CODE_QUALITY -->
+      <div class="bot-comment" id="comment-quality">
+        <div class="bot-comment-header">
+          <div class="bot-avatar">rC</div>
+          <span class="bot-name">rzp-code-review</span>
+          <span class="bot-badge">bot</span>
+          <span style="font-size:11px;color:var(--text-muted);margin-left:auto">docker-compose.dev.yml</span>
+        </div>
+        <div class="bot-comment-body">
+          <div class="suggestion-text">
+            <strong>Suggestion:</strong> Move hardcoded Slack credentials from docker-compose to environment variables or a secrets manager to prevent accidental exposure in version control. <span class="suggestion-tag tag-quality">CODE_QUALITY, importance: 6</span>
+          </div>
+          <div class="suggested-fix-toggle">▶ 💡 View suggested fix (click to expand)</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="replay-hint" id="replay" onclick="startDemo()">↻ Replay</div>
+</div>
+
+<script>
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function showScene(id) {
+  document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+const agents = [
+  { id: 'bug', name: 'Bug Detection', results: '2 found', countClass: 'count-bug', delay: 1800 },
+  { id: 'security', name: 'Security', results: '1 found', countClass: 'count-sec', delay: 2200 },
+  { id: 'quality', name: 'Code Quality', results: '3 found', countClass: 'count-qual', delay: 1500 },
+  { id: 'style', name: 'Style', results: '0 issues', countClass: 'count-ok', delay: 1200 },
+  { id: 'i18n', name: 'i18n', results: '0 issues', countClass: 'count-ok', delay: 1000 },
+  { id: 'premortem', name: 'Pre-Mortem', results: '1 finding', countClass: 'count-qual', delay: 1600 },
+];
+
+async function runAgent(agent) {
+  const card = document.getElementById('agent-' + agent.id);
+  const dot = document.getElementById('dot-' + agent.id);
+  const status = document.getElementById('status-' + agent.id);
+
+  card.classList.add('visible', 'running');
+  dot.className = 'agent-dot running';
+  status.textContent = 'analyzing...';
+
+  await sleep(agent.delay);
+
+  dot.className = 'agent-dot done';
+  card.classList.remove('running');
+  card.classList.add('done');
+  status.innerHTML = '';
+  const countBadge = document.createElement('span');
+  countBadge.className = 'agent-count ' + agent.countClass;
+  countBadge.textContent = agent.results;
+  status.appendChild(countBadge);
+}
+
+async function startDemo() {
+  // Reset
+  document.getElementById('replay').classList.remove('visible');
+  document.getElementById('webhook-notif').classList.remove('visible');
+  document.getElementById('webhook-spinner').style.display = '';
+  document.getElementById('pr-badge').className = 'gh-badge badge-open';
+  document.getElementById('pr-badge').textContent = 'Open';
+  document.getElementById('conv-count').textContent = '1';
+  document.getElementById('filter-bar').classList.remove('visible');
+  document.getElementById('severity-bar').classList.remove('visible');
+  document.getElementById('filter-found').textContent = '—';
+  document.getElementById('filter-kept').textContent = '—';
+  document.getElementById('severity-badge').style.opacity = '0';
+  document.getElementById('severity-conf').style.opacity = '0';
+  document.getElementById('severity-action').style.opacity = '0';
+
+  agents.forEach(a => {
+    const card = document.getElementById('agent-' + a.id);
+    const dot = document.getElementById('dot-' + a.id);
+    const status = document.getElementById('status-' + a.id);
+    card.className = 'agent-card';
+    dot.className = 'agent-dot pending';
+    status.textContent = 'waiting';
+  });
+
+  ['comment-summary','comment-bug','comment-sec','comment-quality'].forEach(id => {
+    document.getElementById(id).classList.remove('visible');
+  });
+
+  document.querySelectorAll('.diff-line').forEach(l => l.classList.remove('visible'));
+
+  // === SCENE 1: PR opened ===
+  showScene('scene-pr');
+  await sleep(1000);
+
+  // Webhook fires
+  document.getElementById('webhook-notif').classList.add('visible');
+  await sleep(2500);
+
+  // === SCENE 2: Analysis ===
+  showScene('scene-analysis');
+  await sleep(400);
+
+  // Show agents and run in parallel
+  agents.forEach(a => {
+    document.getElementById('agent-' + a.id).classList.add('visible');
+  });
+  await sleep(300);
+
+  // Run all agents in parallel
+  await Promise.all(agents.map(a => runAgent(a)));
+  await sleep(600);
+
+  // Filter layer
+  document.getElementById('filter-bar').classList.add('visible');
+  await sleep(400);
+  document.getElementById('filter-found').textContent = '7 suggestions';
+  document.getElementById('filter-found').classList.add('red');
+  await sleep(800);
+  document.getElementById('filter-kept').textContent = '6 kept';
+  document.getElementById('filter-kept').classList.add('green');
+  await sleep(600);
+
+  // Severity
+  document.getElementById('severity-bar').classList.add('visible');
+  await sleep(400);
+  document.getElementById('severity-badge').style.opacity = '1';
+  await sleep(300);
+  document.getElementById('severity-conf').style.opacity = '1';
+  await sleep(300);
+  document.getElementById('severity-action').style.opacity = '1';
+  await sleep(1000);
+
+  // === SCENE 3: Review posted ===
+  showScene('scene-review');
+  await sleep(400);
+
+  // Summary comment
+  document.getElementById('comment-summary').classList.add('visible');
+  await sleep(1000);
+
+  // Bug comment
+  document.getElementById('comment-bug').classList.add('visible');
+  await sleep(300);
+  // Animate diff lines
+  for (let i = 1; i <= 5; i++) {
+    document.getElementById('d' + i).classList.add('visible');
+    await sleep(80);
+  }
+  await sleep(1200);
+
+  // Security comment
+  document.getElementById('comment-sec').classList.add('visible');
+  await sleep(200);
+  for (let i = 1; i <= 2; i++) {
+    document.getElementById('s' + i).classList.add('visible');
+    await sleep(80);
+  }
+  await sleep(1000);
+
+  // Quality comment
+  document.getElementById('comment-quality').classList.add('visible');
+  await sleep(1500);
+
+  // Update PR badge to show review complete
+  document.getElementById('conv-count').textContent = '17';
+
+  await sleep(1500);
+  document.getElementById('replay').classList.add('visible');
+
+  // Auto-replay
+  await sleep(5000);
+  startDemo();
+}
+
+startDemo();
+</script>
+</body>
+</html>

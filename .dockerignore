@@ -1,0 +1,66 @@
+# Version control
+.git
+.github
+.gitignore
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Virtual environments
+venv/
+env/
+.env/
+.venv/
+
+# Distribution / packaging
+dist/
+*.egg-info/
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Logs and databases
+*.log
+*.db
+
+# Environment variables (potentially contain secrets)
+.env
+.flaskenv
+
+# Docker related
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Project specific
+data/*
+tmp/
+tests/
+docs/
+notebooks/
+
+# Keep specific files
+!data/.gitkeep
+!models/.gitkeep
+
+# Env
+.env
+.env.*
+*.env.local
+
+# Database
+# *.sqlite
+# *.sqlite-journal
+
+# Logs
+# ... existing code ... 

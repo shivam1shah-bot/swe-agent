@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vyom Slack Integration Demo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --slack-bg: #1A1D21;
+    --slack-sidebar: #19171D;
+    --slack-hover: #27242C;
+    --slack-active: #1264A3;
+    --slack-border: rgba(255,255,255,0.08);
+    --slack-text: #D1D2D3;
+    --slack-muted: #ABABAD;
+    --slack-white: #FFFFFF;
+    --slack-green: #2BAC76;
+    --slack-blue: #1D9BD1;
+    --slack-yellow: #E8A820;
+    --slack-purple: #4A154B;
+    --slack-red: #E01E5A;
+    --slack-link: #1D9BD1;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #0F172A;
+    color: var(--slack-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  .demo-container {
+    width: 900px;
+    height: 560px;
+    border-radius: 16px;
+    border: 1px solid rgba(51, 65, 85, 0.6);
+    background: var(--slack-bg);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+  }
+
+  /* Window chrome */
+  .window-chrome {
+    height: 40px;
+    background: var(--slack-sidebar);
+    border-bottom: 1px solid var(--slack-border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 8px;
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-red { background: #EF4444; }
+  .dot-yellow { background: #EAB308; }
+  .dot-green { background: #22C55E; }
+
+  /* Slack layout */
+  .slack-layout {
+    display: flex;
+    height: calc(100% - 40px);
+  }
+
+  /* Sidebar */
+  .slack-sidebar {
+    width: 220px;
+    background: var(--slack-sidebar);
+    border-right: 1px solid var(--slack-border);
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .workspace-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--slack-border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .workspace-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #3B82F6, #06B6D4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 14px;
+    color: white;
+  }
+  .workspace-name {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--slack-white);
+  }
+
+  .sidebar-section {
+    padding: 12px 0 4px 0;
+  }
+  .sidebar-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--slack-muted);
+    padding: 0 16px 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .channel-item {
+    padding: 4px 16px;
+    font-size: 14px;
+    color: var(--slack-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: default;
+    transition: background 0.15s;
+  }
+  .channel-item:hover { background: var(--slack-hover); }
+  .channel-item.active {
+    background: var(--slack-active);
+    color: var(--slack-white);
+    font-weight: 600;
+  }
+  .channel-hash { font-size: 13px; opacity: 0.7; }
+  .unread-badge {
+    margin-left: auto;
+    background: var(--slack-red);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 10px;
+    min-width: 18px;
+    text-align: center;
+  }
+
+  .dm-item {
+    padding: 4px 16px;
+    font-size: 14px;
+    color: var(--slack-muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: default;
+  }
+  .dm-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: white;
+  }
+  .online-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--slack-green);
+    border: 2px solid var(--slack-sidebar);
+    position: absolute;
+    bottom: -1px;
+    right: -1px;
+  }
+
+  /* Main chat area */
+  .chat-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .channel-header {
+    padding: 10px 20px;
+    border-bottom: 1px solid var(--slack-border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .channel-header-name {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--slack-white);
+  }
+  .channel-header-desc {
+    font-size: 12px;
+    color: var(--slack-muted);
+    margin-left: 8px;
+    border-left: 1px solid var(--slack-border);
+    padding-left: 8px;
+  }
+
+  /* Messages */
+  .messages-area {
+    flex: 1;
+    overflow: hidden;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .message {
+    display: flex;
+    gap: 10px;
+    padding: 6px 0;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all 0.4s ease;
+  }
+  .message.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .msg-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    color: white;
+  }
+
+  .msg-content { flex: 1; min-width: 0; }
+  .msg-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 2px;
+  }
+  .msg-author {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--slack-white);
+  }
+  .msg-badge {
+    font-size: 10px;
+    font-weight: 600;
+    background: rgba(29,155,209,0.15);
+    color: var(--slack-blue);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  .msg-time {
+    font-size: 11px;
+    color: var(--slack-muted);
+  }
+  .msg-text {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--slack-text);
+  }
+  .msg-text strong { color: var(--slack-white); font-weight: 700; }
+  .msg-text code {
+    background: rgba(255,255,255,0.06);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #E06C75;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .msg-text a {
+    color: var(--slack-link);
+    text-decoration: none;
+  }
+  .msg-text .emoji {
+    font-size: 16px;
+    vertical-align: middle;
+  }
+
+  /* Thread reply indicator */
+  .thread-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    cursor: default;
+    font-size: 12px;
+    color: var(--slack-link);
+    opacity: 0;
+    transition: opacity 0.4s;
+    width: fit-content;
+  }
+  .thread-indicator.visible { opacity: 1; }
+
+  /* PR list in message */
+  .pr-list {
+    margin-top: 6px;
+    padding: 0;
+    list-style: none;
+  }
+  .pr-list li {
+    padding: 3px 0;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0;
+    transform: translateX(-8px);
+    transition: all 0.3s ease;
+  }
+  .pr-list li.visible {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  .pr-check {
+    color: var(--slack-green);
+    font-weight: 700;
+  }
+  .pr-repo {
+    font-weight: 600;
+    color: var(--slack-white);
+  }
+  .pr-link {
+    color: var(--slack-link);
+    text-decoration: none;
+    font-size: 12px;
+  }
+
+  /* Reactions */
+  .reactions {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .reaction {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    font-size: 12px;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.3s ease;
+  }
+  .reaction.visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+  .reaction-count { color: var(--slack-muted); font-size: 11px; }
+
+  /* Completion stats banner */
+  .stats-banner {
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: rgba(43, 172, 118, 0.08);
+    border: 1px solid rgba(43, 172, 118, 0.2);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  .stats-banner.visible { opacity: 1; }
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .stat-value {
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--slack-green);
+  }
+  .stat-label {
+    font-size: 10px;
+    color: var(--slack-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Typing indicator */
+  .typing-indicator {
+    padding: 4px 20px;
+    font-size: 12px;
+    color: var(--slack-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    height: 24px;
+  }
+  .typing-indicator.visible { opacity: 1; }
+  .typing-dots {
+    display: flex;
+    gap: 3px;
+  }
+  .typing-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--slack-muted);
+    animation: typingBounce 1.4s infinite;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typingBounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-4px); opacity: 1; }
+  }
+
+  /* Message composer */
+  .composer {
+    padding: 10px 20px 14px;
+    border-top: 1px solid var(--slack-border);
+  }
+  .composer-input {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--slack-border);
+    border-radius: 8px;
+    padding: 9px 14px;
+    color: var(--slack-text);
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+  }
+  .composer-input.typing-active {
+    border-color: rgba(29, 155, 209, 0.4);
+  }
+
+  /* Typing cursor in composer */
+  .compose-cursor {
+    display: inline;
+    animation: composeBlink 0.8s infinite;
+    color: var(--slack-blue);
+  }
+  @keyframes composeBlink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  /* Scenes */
+  .scene {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+  }
+  .scene.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Replay button */
+  .replay-btn {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    background: rgba(29, 155, 209, 0.15);
+    border: 1px solid rgba(29, 155, 209, 0.3);
+    color: var(--slack-blue);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 100;
+    opacity: 0;
+    transition: all 0.3s;
+    font-family: 'Inter', sans-serif;
+  }
+  .replay-btn.visible { opacity: 1; }
+  .replay-btn:hover { background: rgba(29, 155, 209, 0.25); }
+
+  /* Notification pulse */
+  @keyframes notifyPulse {
+    0% { box-shadow: 0 0 0 0 rgba(224, 30, 90, 0.4); }
+    70% { box-shadow: 0 0 0 8px rgba(224, 30, 90, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(224, 30, 90, 0); }
+  }
+  .notify-pulse {
+    animation: notifyPulse 1s ease 2;
+  }
+
+  /* DevRev ticket attachment */
+  .ticket-attachment {
+    margin-top: 8px;
+    padding: 10px 12px;
+    border-left: 4px solid var(--slack-blue);
+    background: rgba(29, 155, 209, 0.06);
+    border-radius: 0 6px 6px 0;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .ticket-attachment.visible { opacity: 1; }
+  .ticket-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--slack-link);
+    margin-bottom: 3px;
+  }
+  .ticket-desc {
+    font-size: 12px;
+    color: var(--slack-muted);
+  }
+  .ticket-meta {
+    display: flex;
+    gap: 12px;
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--slack-muted);
+  }
+
+  /* Scene transition overlay */
+  .scene-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.6);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    opacity: 0;
+    z-index: 50;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .scene-label.visible { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="demo-container">
+  <div class="window-chrome">
+    <div class="dot dot-red"></div>
+    <div class="dot dot-yellow"></div>
+    <div class="dot dot-green"></div>
+  </div>
+
+  <div class="slack-layout">
+    <!-- Sidebar -->
+    <div class="slack-sidebar">
+      <div class="workspace-header">
+        <div class="workspace-icon">R</div>
+        <div class="workspace-name">Razorpay</div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Channels</div>
+        <div class="channel-item">
+          <span class="channel-hash">#</span> general
+        </div>
+        <div class="channel-item">
+          <span class="channel-hash">#</span> developer-experience
+        </div>
+        <div class="channel-item active" id="sidebar-testing">
+          <span class="channel-hash">#</span> testing-alerts
+          <span class="unread-badge" id="unread-badge" style="display:none">1</span>
+        </div>
+        <div class="channel-item">
+          <span class="channel-hash">#</span> vyom-alerts
+        </div>
+        <div class="channel-item">
+          <span class="channel-hash">#</span> devops-infra
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-label">Direct Messages</div>
+        <div class="dm-item">
+          <div class="dm-avatar" style="background:#E01E5A; position:relative;">A<div class="online-dot"></div></div>
+          arnav.gaur
+        </div>
+        <div class="dm-item">
+          <div class="dm-avatar" style="background:#2BAC76; position:relative;">R</div>
+          richesh.gupta
+        </div>
+        <div class="dm-item">
+          <div class="dm-avatar" style="background:#E8A820; position:relative;">N<div class="online-dot"></div></div>
+          nikhilesh
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat area -->
+    <div class="chat-area" style="position:relative;">
+
+      <!-- SCENE 1: User triggers Vyom from Slack -->
+      <div class="scene active" id="scene1">
+        <div class="channel-header">
+          <span style="font-size:16px; opacity:0.5;">#</span>
+          <span class="channel-header-name">testing-alerts</span>
+          <span class="channel-header-desc">Vyom agent notifications & alerts</span>
+        </div>
+
+        <div class="messages-area">
+          <!-- Context message -->
+          <div class="message" id="msg-context">
+            <div class="msg-avatar" style="background: #E8A820;">N</div>
+            <div class="msg-content">
+              <div class="msg-header">
+                <span class="msg-author">nikhilesh</span>
+                <span class="msg-time">1:04 PM</span>
+              </div>
+              <div class="msg-text">
+                Hey <span style="color:var(--slack-link);">@arnav.gaur</span> — can you trigger the banking onboarding for the new org? Ticket is <code>TKT-4547453</code>
+              </div>
+            </div>
+          </div>
+
+          <!-- Arnav's reply -->
+          <div class="message" id="msg-arnav">
+            <div class="msg-avatar" style="background: #E01E5A;">A</div>
+            <div class="msg-content">
+              <div class="msg-header">
+                <span class="msg-author">arnav.gaur</span>
+                <span class="msg-time">1:05 PM</span>
+              </div>
+              <div class="msg-text">
+                On it! Triggering Vyom with the banking-org-onboarding skill <span class="emoji">🚀</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Vyom bot: Task queued -->
+          <div class="message" id="msg-vyom-queued">
+            <div class="msg-avatar" style="background: linear-gradient(135deg, #3B82F6, #06B6D4);">K</div>
+            <div class="msg-content">
+              <div class="msg-header">
+                <span class="msg-author">Vyom</span>
+                <span class="msg-badge">APP</span>
+                <span class="msg-time">1:06 PM</span>
+              </div>
+              <div class="msg-text">
+                <span class="emoji">🤖</span> Ticket task queued by <span style="color:var(--slack-link);">@arnav.gaur</span>!<br>
+                <strong>Ticket:</strong> <code>TKT-4547453</code><br>
+                <strong>Task ID:</strong> <code>3881e07a-09a1-4acf-88a1-f74b86116dd9</code><br>
+                <strong>Skills:</strong> banking-org-onboarding<br><br>
+                Agent will fetch ticket details from DevRev and create PRs in the relevant repos. I'll reply here when it's done.
+              </div>
+              <div class="ticket-attachment" id="ticket-attach">
+                <div class="ticket-title">TKT-4547453 · Banking Org Onboarding</div>
+                <div class="ticket-desc">Onboard vyombank to production across all services</div>
+                <div class="ticket-meta">
+                  <span>📋 DevRev</span>
+                  <span>Priority: High</span>
+                  <span>Assigned: Vyom</span>
+                </div>
+              </div>
+              <div class="reactions" id="reactions-queued">
+                <div class="reaction" id="react-eyes"><span class="emoji">👀</span> <span class="reaction-count">2</span></div>
+                <div class="reaction" id="react-rocket"><span class="emoji">🚀</span> <span class="reaction-count">1</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="typing-indicator" id="typing1">
+          <div class="typing-dots">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+          </div>
+          <strong>Vyom</strong> is working on the task...
+        </div>
+
+        <div class="composer">
+          <div class="composer-input" id="composer1">
+            Message #testing-alerts
+          </div>
+        </div>
+      </div>
+
+      <!-- SCENE 2: Vyom posts completion in thread -->
+      <div class="scene" id="scene2">
+        <div class="channel-header">
+          <span style="font-size:16px; opacity:0.5;">🧵</span>
+          <span class="channel-header-name">Thread</span>
+          <span class="channel-header-desc">in #testing-alerts</span>
+        </div>
+
+        <div class="messages-area">
+          <!-- Original queued message (compact) -->
+          <div class="message visible" id="msg-thread-parent">
+            <div class="msg-avatar" style="background: linear-gradient(135deg, #3B82F6, #06B6D4);">K</div>
+            <div class="msg-content">
+              <div class="msg-header">
+                <span class="msg-author">Vyom</span>
+                <span class="msg-badge">APP</span>
+                <span class="msg-time">1:06 PM</span>
+              </div>
+              <div class="msg-text" style="opacity:0.6; font-size:13px;">
+                <span class="emoji">🤖</span> Ticket task queued by @arnav.gaur · <code>TKT-4547453</code> · banking-org-onboarding
+              </div>
+            </div>
+          </div>
+
+          <div style="border-bottom: 1px solid var(--slack-border); margin: 4px 0 8px;"></div>
+
+          <!-- Vyom completion message -->
+          <div class="message" id="msg-complete">
+            <div class="msg-avatar" style="background: linear-gradient(135deg, #3B82F6, #06B6D4);">K</div>
+            <div class="msg-content">
+              <div class="msg-header">
+                <span class="msg-author">Vyom</span>
+                <span class="msg-badge">APP</span>
+                <span class="msg-time">1:25 PM</span>
+              </div>
+              <div class="msg-text">
+                <span class="emoji">✅</span> <strong>Task completed!</strong> &nbsp;|&nbsp; <strong>Ticket:</strong> <a href="#">TKT-4547453</a><br><br>
+                All <strong>6 PRs</strong> for onboarding Vyom (<code>kriyabank</code>) to production are ready:
+              </div>
+
+              <!-- PR List -->
+              <ul class="pr-list" id="pr-list">
+                <li><span class="pr-check">✅</span> <span class="pr-repo">kube-manifests</span> <a class="pr-link" href="#">#24171</a></li>
+                <li><span class="pr-check">✅</span> <span class="pr-repo">terraform-kong</span> <a class="pr-link" href="#">#8852</a></li>
+                <li><span class="pr-check">✅</span> <span class="pr-repo">vishnu</span> <a class="pr-link" href="#">#17164</a></li>
+                <li><span class="pr-check">✅</span> <span class="pr-repo">pg-onboarding-service</span> <a class="pr-link" href="#">#3771</a></li>
+                <li><span class="pr-check">✅</span> <span class="pr-repo">api</span> <a class="pr-link" href="#">#65042</a></li>
+                <li><span class="pr-check">✅</span> <span class="pr-repo">dashboard</span> <a class="pr-link" href="#">#19713</a></li>
+              </ul>
+
+              <!-- Stats banner -->
+              <div class="stats-banner" id="stats-banner">
+                <div class="stat-item">
+                  <div class="stat-value">6</div>
+                  <div class="stat-label">PRs Created</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-value">47</div>
+                  <div class="stat-label">Files Modified</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-value">6</div>
+                  <div class="stat-label">Repositories</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-value" style="font-size:14px;">~19m</div>
+                  <div class="stat-label">Time Taken</div>
+                </div>
+              </div>
+
+              <div class="msg-text" style="margin-top:10px; font-size:13px;">
+                <span class="emoji">✅</span> DevRev ticket <strong>TKT-4547453</strong> updated with all PR links and next steps<br>
+                The onboarding is complete and ready for review by the respective teams!
+              </div>
+
+              <div class="reactions" id="reactions-complete">
+                <div class="reaction" id="react-fire1"><span class="emoji">🔥</span> <span class="reaction-count">3</span></div>
+                <div class="reaction" id="react-tada"><span class="emoji">🎉</span> <span class="reaction-count">2</span></div>
+                <div class="reaction" id="react-check"><span class="emoji">✅</span> <span class="reaction-count">1</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Team reply -->
+          <div class="message" id="msg-team-reply">
+            <div class="msg-avatar" style="background: #E8A820;">N</div>
+            <div class="msg-content">
+              <div class="msg-header">
+                <span class="msg-author">nikhilesh</span>
+                <span class="msg-time">1:26 PM</span>
+              </div>
+              <div class="msg-text">
+                Amazing — 6 repos handled in under 20 minutes! <span class="emoji">🚀</span> Assigning reviewers now.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="typing-indicator" id="typing2" style="visibility:hidden;">
+          <div class="typing-dots">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+          </div>
+        </div>
+
+        <div class="composer">
+          <div class="composer-input">Reply in thread...</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <button class="replay-btn" id="replay-btn" onclick="startDemo()">↻ Replay</button>
+</div>
+
+<script>
+const TIMINGS = {
+  msgContext: 500,
+  msgArnav: 2000,
+  msgVyomQueued: 3800,
+  ticketAttach: 5000,
+  reactions: 5800,
+  typing: 6500,
+  sceneSwitch: 9000,
+  msgComplete: 10000,
+  prListStart: 11000,
+  prInterval: 400,
+  statsBanner: 13800,
+  devrevUpdate: 14500,
+  reactionsComplete: 15200,
+  teamReply: 16500,
+  loopPause: 20000,
+};
+
+let timeouts = [];
+
+function clearAllTimeouts() {
+  timeouts.forEach(t => clearTimeout(t));
+  timeouts = [];
+}
+
+function schedule(fn, delay) {
+  timeouts.push(setTimeout(fn, delay));
+}
+
+function resetAll() {
+  clearAllTimeouts();
+
+  // Reset scenes
+  document.getElementById('scene1').classList.add('active');
+  document.getElementById('scene2').classList.remove('active');
+
+  // Reset messages
+  ['msg-context', 'msg-arnav', 'msg-vyom-queued', 'msg-complete', 'msg-team-reply'].forEach(id => {
+    document.getElementById(id).classList.remove('visible');
+  });
+
+  // Reset ticket attachment
+  document.getElementById('ticket-attach').classList.remove('visible');
+
+  // Reset typing
+  document.getElementById('typing1').classList.remove('visible');
+
+  // Reset reactions
+  ['react-eyes', 'react-rocket', 'react-fire1', 'react-tada', 'react-check'].forEach(id => {
+    document.getElementById(id).classList.remove('visible');
+  });
+
+  // Reset PR list
+  document.querySelectorAll('#pr-list li').forEach(li => li.classList.remove('visible'));
+
+  // Reset stats banner
+  document.getElementById('stats-banner').classList.remove('visible');
+
+  // Reset unread badge
+  document.getElementById('unread-badge').style.display = 'none';
+
+  // Reset replay button
+  document.getElementById('replay-btn').classList.remove('visible');
+}
+
+function startDemo() {
+  resetAll();
+
+  // Scene 1: Slack channel conversation
+  schedule(() => {
+    document.getElementById('msg-context').classList.add('visible');
+  }, TIMINGS.msgContext);
+
+  schedule(() => {
+    document.getElementById('msg-arnav').classList.add('visible');
+  }, TIMINGS.msgArnav);
+
+  schedule(() => {
+    document.getElementById('msg-vyom-queued').classList.add('visible');
+  }, TIMINGS.msgVyomQueued);
+
+  schedule(() => {
+    document.getElementById('ticket-attach').classList.add('visible');
+  }, TIMINGS.ticketAttach);
+
+  schedule(() => {
+    document.getElementById('react-eyes').classList.add('visible');
+    schedule(() => {
+      document.getElementById('react-rocket').classList.add('visible');
+    }, 300);
+  }, TIMINGS.reactions);
+
+  schedule(() => {
+    document.getElementById('typing1').classList.add('visible');
+  }, TIMINGS.typing);
+
+  // Scene 2: Thread view with completion
+  schedule(() => {
+    document.getElementById('scene1').classList.remove('active');
+    document.getElementById('scene2').classList.add('active');
+  }, TIMINGS.sceneSwitch);
+
+  schedule(() => {
+    document.getElementById('msg-complete').classList.add('visible');
+  }, TIMINGS.msgComplete);
+
+  // Animate PR list items one by one
+  const prItems = document.querySelectorAll('#pr-list li');
+  prItems.forEach((li, i) => {
+    schedule(() => {
+      li.classList.add('visible');
+    }, TIMINGS.prListStart + (i * TIMINGS.prInterval));
+  });
+
+  schedule(() => {
+    document.getElementById('stats-banner').classList.add('visible');
+  }, TIMINGS.statsBanner);
+
+  schedule(() => {
+    document.getElementById('react-fire1').classList.add('visible');
+    schedule(() => document.getElementById('react-tada').classList.add('visible'), 250);
+    schedule(() => document.getElementById('react-check').classList.add('visible'), 500);
+  }, TIMINGS.reactionsComplete);
+
+  schedule(() => {
+    document.getElementById('msg-team-reply').classList.add('visible');
+  }, TIMINGS.teamReply);
+
+  // Show replay button
+  schedule(() => {
+    document.getElementById('replay-btn').classList.add('visible');
+  }, TIMINGS.teamReply + 1500);
+
+  // Auto-loop
+  schedule(() => {
+    startDemo();
+  }, TIMINGS.loopPause);
+}
+
+// Start automatically
+startDemo();
+</script>
+
+</body>
+</html>

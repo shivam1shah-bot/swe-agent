@@ -1,0 +1,107 @@
+X-Balance Service - Rate Limiter Configuration Reference
+========================================================
+
+FILE: x-balances/internal/constant/constant.go
+
+The rate limiter configuration controls the throughput limits for each bank's balance fetch operations.
+
+REFERENCE PATTERN (Current banks: rbl, icici, axis, idfc, yesbank):
+
+=== GetRateLimiterFactory FUNCTION ===
+
+Add new bank configuration to the map:
+
+```go
+// GetRateLimiterFactory returns the rate limiter factory
+func GetRateLimiterFactory(store cache.CacheStore) map[string]map[string]ratelimiting.RateLimiter {
+	return map[string]map[string]ratelimiting.RateLimiter{
+		"rbl": {
+			"async": getMutexBasedTokenBucketRateLimiter(16, "rbl", "async", store),
+		},
+		"icici": {
+			"async": getMutexBasedTokenBucketRateLimiter(16, "icici", "async", store),
+		},
+		"axis": {
+			"async": getMutexBasedTokenBucketRateLimiter(16, "axis", "async", store),
+		},
+		"idfc": {
+			"async": getMutexBasedTokenBucketRateLimiter(5, "idfc", "async", store),
+		},
+		"yesbank": {
+			"async": getMutexBasedTokenBucketRateLimiter(16, "yesbank", "async", store),
+		},
+		"BANKNAME": {  // ADD NEW BANK ENTRY - use lowercase bank name
+			"async": getMutexBasedTokenBucketRateLimiter(LIMIT_VALUE, "BANKNAME", "async", store),
+		},
+	}
+}
+```
+
+RATE LIMIT CONFIGURATION:
+- Standard limit: 16 requests (used by most banks)
+- Conservative limit: 5 requests (used by banks with stricter APIs like IDFC)
+- Custom limits: Based on bank's API documentation and SLA requirements
+
+RATE LIMITER TYPE:
+- Algorithm: Mutex-based Token Bucket  
+- Request type: "async" (for asynchronous balance fetch operations)
+- Lock key pattern: "{bank}_{requestType}_{index}"
+
+INTEGRATION NOTES:
+1. Bank name must be lowercase (consistent with channel enum)
+2. Limit value should be determined based on:
+   - Bank's API rate limits
+   - SLA requirements
+   - Load testing results
+   - Business requirements
+3. Request type is always "async" for balance fetch operations
+
+RATE LIMIT RECOMMENDATIONS:
+- High volume banks (good API performance): 16 requests
+- Conservative banks (strict rate limits): 5-8 requests  
+- New banks (unknown performance): Start with 8-10 requests
+- Monitor and adjust based on error rates and performance
+
+EXAMPLE CONFIGURATIONS:
+
+For SBI (State Bank of India):
+```go
+"sbi": {
+	"async": getMutexBasedTokenBucketRateLimiter(12, "sbi", "async", store),
+},
+```
+
+For HDFC (private bank, likely good API):
+```go
+"hdfc": {
+	"async": getMutexBasedTokenBucketRateLimiter(16, "hdfc", "async", store),
+},
+```
+
+For smaller bank (conservative approach):
+```go
+"kotak": {
+	"async": getMutexBasedTokenBucketRateLimiter(8, "kotak", "async", store),
+},
+```
+
+MONITORING:
+- Monitor rate limit errors in logs
+- Track latency metrics per bank
+- Adjust limits based on:
+  - 429 (Too Many Requests) responses
+  - Timeout errors  
+  - Average response times
+  - Bank-specific error patterns
+
+TESTING:
+- Load test new rate limits
+- Verify rate limiting works correctly
+- Test concurrent request handling
+- Monitor error rates during peak loads
+
+VALIDATION:
+- Bank name must match channel enum string
+- Limit must be positive integer
+- Request type must be "async"
+- Store parameter must be valid cache store

@@ -1,0 +1,80 @@
+{
+  "sample_tasks": [
+    {
+      "id": "task_001",
+      "type": "code_analysis",
+      "description": "Analyze Python code for potential issues",
+      "parameters": {
+        "repository": "test/sample-repo",
+        "branch": "main",
+        "files": ["src/main.py", "src/utils.py"]
+      },
+      "expected_result": {
+        "issues_found": 3,
+        "suggestions": ["Add type hints", "Improve error handling"]
+      }
+    },
+    {
+      "id": "task_002",
+      "type": "code_generation",
+      "description": "Generate unit tests for existing code",
+      "parameters": {
+        "target_file": "src/calculator.py",
+        "test_framework": "pytest"
+      },
+      "expected_result": {
+        "test_file": "tests/test_calculator.py",
+        "test_count": 5
+      }
+    }
+  ],
+  "sample_workflows": [
+    {
+      "id": "workflow_001",
+      "name": "Code Review Workflow",
+      "description": "Complete code review process",
+      "steps": [
+        {
+          "type": "analyze",
+          "config": {
+            "tools": ["pylint", "mypy", "bandit"]
+          }
+        },
+        {
+          "type": "review",
+          "config": {
+            "check_style": true,
+            "check_security": true
+          }
+        },
+        {
+          "type": "report",
+          "config": {
+            "format": "markdown",
+            "include_suggestions": true
+          }
+        }
+      ]
+    }
+  ],
+  "mock_responses": {
+    "github_api": {
+      "repository": {
+        "id": 123456,
+        "name": "test-repo",
+        "full_name": "test-user/test-repo",
+        "private": false,
+        "default_branch": "main"
+      },
+      "pull_request": {
+        "id": 789,
+        "number": 42,
+        "title": "Add new feature",
+        "state": "open",
+        "head": {
+          "sha": "abc123def456"
+        }
+      }
+    }
+  }
+} 

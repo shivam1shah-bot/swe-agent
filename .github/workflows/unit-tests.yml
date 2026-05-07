@@ -1,0 +1,217 @@
+name: Unit Tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:  # Run on ALL pull requests to any branch
+
+env:
+  PYTHON_VERSION: "3.13"
+  COVERAGE_THRESHOLD: 40
+
+jobs:
+  unit-tests:
+    name: Run Unit Tests
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Generate GitHub App Token
+        id: app-token
+        uses: razorpay/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.WORKFLOWGATEKEEPER_APP_ID }}
+          private-key: ${{ secrets.WORKFLOWGATEKEEPER_PRIVATEKEY }}
+          owner: razorpay
+          repositories: "ai-pr-reviewer,agent-skills"
+
+      - name: Install dependencies
+        env:
+          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
+          PIP_NO_CACHE_DIR: "1"
+        run: |
+          # Configure git to use GitHub App token for private repo access
+          git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Set up test environment
+        run: |
+          # Create necessary directories
+          mkdir -p tmp/
+          mkdir -p tests/tmp/
+          
+          # Set test environment variables
+          echo "TESTING=true" >> $GITHUB_ENV
+          echo "PYTHONPATH=${{ github.workspace }}/src:$PYTHONPATH" >> $GITHUB_ENV
+
+      - name: Run unit tests with coverage
+        run: |
+          python -m pytest tests/unit/ \
+            --cov=src \
+            --cov-branch \
+            --cov-report=xml:coverage.xml \
+            --cov-report=html:htmlcov \
+            --cov-report=term-missing \
+            --cov-fail-under=${{ env.COVERAGE_THRESHOLD }} \
+            --junit-xml=test-results.xml \
+            --tb=short \
+            -v \
+            --cov-config=.coveragerc
+
+      - name: Upload coverage reports to Codecov
+        if: always()
+        uses: codecov/codecov-action@4481f553995cc5011b158ce191746ac1a1d0f815  # v5.5.3
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+      - name: Generate coverage summary
+        if: always()
+        run: |
+          python -c "
+          import xml.etree.ElementTree as ET
+          import os
+          
+          # Parse coverage.xml
+          if os.path.exists('coverage.xml'):
+              tree = ET.parse('coverage.xml')
+              root = tree.getroot()
+              coverage = root.get('line-rate', '0')
+              coverage_percent = round(float(coverage) * 100, 1)
+              
+              # Create summary
+              summary = f'''## 📊 Unit Test Coverage Report
+          
+          **Overall Coverage:** {coverage_percent}% {'✅' if coverage_percent >= ${{ env.COVERAGE_THRESHOLD }} else '❌'}
+          **Threshold:** ${{ env.COVERAGE_THRESHOLD }}%
+          **Status:** {'PASS' if coverage_percent >= ${{ env.COVERAGE_THRESHOLD }} else 'FAIL'}
+          
+          ### Coverage Details
+          - **Lines Covered:** {root.get('lines-covered', 'N/A')}
+          - **Total Lines:** {root.get('lines-valid', 'N/A')}
+          - **Coverage Rate:** {coverage_percent}%
+          
+          {'🎉 Great job! Coverage is above the threshold.' if coverage_percent >= ${{ env.COVERAGE_THRESHOLD }} else '⚠️ Coverage is below the required threshold. Please add more tests.'}
+          '''
+              
+              with open('coverage-summary.md', 'w') as f:
+                  f.write(summary)
+          else:
+              with open('coverage-summary.md', 'w') as f:
+                  f.write('## ❌ Coverage Report\nCoverage report could not be generated.')
+          "
+
+      - name: Debug workflow context
+        if: always()
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Issue number: ${{ github.event.number }}"
+          echo "PR number: ${{ github.event.pull_request.number }}"
+          ls -la coverage*
+
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd  # v8
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let coverageSummary = '';
+            try {
+              coverageSummary = fs.readFileSync('coverage-summary.md', 'utf8');
+              console.log('Coverage summary loaded successfully');
+            } catch (error) {
+              console.error('Failed to read coverage-summary.md:', error);
+              coverageSummary = '## ❌ Coverage Report\nFailed to generate coverage report.';
+            }
+            
+            try {
+              // Find existing coverage comment
+              const comments = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+              });
+              
+              console.log(`Found ${comments.data.length} existing comments`);
+              
+              const botComment = comments.data.find(comment => 
+                comment.user.type === 'Bot' && 
+                comment.body.includes('📊 Unit Test Coverage Report')
+              );
+              
+              if (botComment) {
+                console.log('Updating existing coverage comment');
+                // Update existing comment
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: botComment.id,
+                  body: coverageSummary
+                });
+              } else {
+                console.log('Creating new coverage comment');
+                // Create new comment
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body: coverageSummary
+                });
+              }
+              console.log('Coverage comment posted successfully');
+            } catch (error) {
+              console.error('Failed to post coverage comment:', error);
+              core.setFailed(`Failed to post coverage comment: ${error.message}`);
+            }
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f  # v7.0.0
+        with:
+          name: unit-test-results
+          path: |
+            test-results.xml
+            coverage.xml
+            htmlcov/
+            coverage-summary.md
+
+      - name: Upload coverage to artifacts
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f  # v7.0.0
+        with:
+          name: coverage-report
+          path: htmlcov/
+
+      - name: Display coverage for non-PR events
+        if: github.event_name != 'pull_request' && always()
+        run: |
+          echo "## 📊 Coverage Summary (Push Event)"
+          if [ -f "coverage-summary.md" ]; then
+            cat coverage-summary.md
+          else
+            echo "Coverage summary not available"
+          fi
+
+      - name: Test Summary
+        if: always()
+        run: |
+          echo "## 🧪 Unit Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "**Event Type:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          if [ -f "coverage-summary.md" ]; then
+            cat coverage-summary.md >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📁 Artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "- **Coverage Report**: Available in the htmlcov/ directory" >> $GITHUB_STEP_SUMMARY
+          echo "- **Test Results**: Available in test-results.xml" >> $GITHUB_STEP_SUMMARY 

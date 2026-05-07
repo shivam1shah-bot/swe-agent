@@ -1,0 +1,531 @@
+{
+  "version": "1.0.0",
+  "updated": "2026-03-23",
+  "count": 26,
+  "tools": [
+    {
+      "id": "discover-plugin",
+      "stage": "Planning",
+      "stageEmoji": "📋",
+      "name": "Discover Plugin",
+      "type": "Plugin",
+      "poc": "Nikhilesh Chamarthi",
+      "team": "DevEx",
+      "canDo": [
+        "Codebase search & knowledge discovery across Razorpay repos (40 subgroups)",
+        "LLD & brainstorm for system design and architecture",
+        "Google Drive document search via Gemini Enterprise",
+        "Multi-cluster Kubernetes & AWS infra operations",
+        "8 specialized agents, 13 MCP integrations (Blade, Brahmos, Coralogix, DevRev, E2E Tests, Friday AWS/MCP, Gandalf, KubeJit, Slack, Spinnaker, Splitz, Trino)",
+        "Now a service — plugin will be updated with service references for efficiency"
+      ],
+      "cantDo": [
+        "Tracking in Discover project",
+        "Adding more connectors for infra"
+      ],
+      "state": "Transitioning to service. Plugin active.",
+      "prodReady": "Yes",
+      "slackChannel": "#developer-experience",
+      "docsLink": "https://github.com/razorpay/claude-plugins/tree/master/plugins/discover"
+    },
+    {
+      "id": "discover-service",
+      "stage": "Planning",
+      "stageEmoji": "📋",
+      "name": "Discover Service",
+      "type": "Service",
+      "poc": "Chirag Jain",
+      "team": "DevEx",
+      "canDo": [
+        "Knowledge layer / Oracle for Agentic workflows",
+        "Our internal Gemini / ChatGPT for Razorpay",
+        "Generate PRD / TechSpec / DevRev Tickets"
+      ],
+      "cantDo": [],
+      "state": "Beta - https://discover.concierge.stage.razorpay.in/",
+      "prodReady": "Partially",
+      "slackChannel": "#proj-discover-devx",
+      "docsLink": "https://discover.concierge.stage.razorpay.in/"
+    },
+    {
+      "id": "blade-mcp",
+      "stage": "Coding",
+      "stageEmoji": "💻",
+      "name": "Blade MCP",
+      "type": "MCP",
+      "poc": "Ravikumar R",
+      "team": "Frontend Infra",
+      "canDo": [
+        "Blade Design System MCP server for component lookup & documentation",
+        "Design token access (colors, spacing, typography)",
+        "Component code generation with Blade components",
+        "Design system compliance checking"
+      ],
+      "cantDo": [
+        "No Figma-to-code conversion yet",
+        "Limited to Blade component library only"
+      ],
+      "state": "Active",
+      "prodReady": "Yes",
+      "slackChannel": "#design-system",
+      "docsLink": "blade.razorpay.com"
+    },
+    {
+      "id": "devstack-skill",
+      "stage": "Devstack",
+      "stageEmoji": "🧰",
+      "name": "Devstack Skill",
+      "type": "Skill",
+      "poc": "Parag Dudeja",
+      "team": "DevOps",
+      "canDo": [
+        "Automated deployment & debugging for helmfile services via /devstack commands",
+        "Autonomous recovery from OOMKilled, CrashLoopBackOff errors",
+        "Ephemeral resource provisioning (Redis, SQS, SNS, etc.)",
+        "Commands: /devstack onboard, deploy, debug"
+      ],
+      "cantDo": [
+        "Non-helmfile service support limited",
+        "Cannot create secrets in credstash, fix app-level bugs"
+      ],
+      "state": "Active",
+      "prodReady": "Yes",
+      "slackChannel": "#platform-devstack",
+      "docsLink": "https://razorpay.slack.com/archives/C024Y4GAW8N/p1769516158040759"
+    },
+    {
+      "id": "e2e-onboarding",
+      "stage": "Testing",
+      "stageEmoji": "🧪",
+      "name": "E2E Onboarding",
+      "type": "Langgraph Agent",
+      "poc": "Chirag Chiranjib",
+      "team": "Quality",
+      "canDo": [
+        "E2E test generation and onboarding automation using LangGraph agent"
+      ],
+      "cantDo": [
+        "This is deprecated, we should migrate this to a Skill"
+      ],
+      "state": "Deprecated. Migrating to Skill.",
+      "prodReady": "No",
+      "slackChannel": "",
+      "docsLink": "https://vyom.concierge.stage.razorpay.in/agents-catalogue/micro-frontend/e2e-onboarding"
+    },
+    {
+      "id": "slit-agents",
+      "stage": "Testing",
+      "stageEmoji": "🧪",
+      "name": "SLIT Agents",
+      "type": "Plugin",
+      "poc": "Ajay KS",
+      "team": "Quality",
+      "canDo": [
+        "SLIT V2 automated test generation for Go and Python services",
+        "72 P0/P1 services adopted",
+        "Handed over to Quality team for ownership"
+      ],
+      "cantDo": [
+        "Expanding language support beyond Go/Python"
+      ],
+      "state": "Active. Handed over to Quality team.",
+      "prodReady": "Yes",
+      "slackChannel": "#developer-experience",
+      "docsLink": "https://razorpay.slack.com/archives/C08DS8AE7T8/p1770060686032899"
+    },
+    {
+      "id": "e2e-agents",
+      "stage": "Testing",
+      "stageEmoji": "🧪",
+      "name": "E2E Agents",
+      "type": "Agent",
+      "poc": "Shankar Parimi",
+      "team": "Quality",
+      "canDo": [
+        "Can generate end to end scenarios for a service on the following triggers:",
+        "PRD / Tech Spec to E2E Scenarios",
+        "On PR Diff to E2E Scenarios",
+        "On Production Synthetic Test Data"
+      ],
+      "cantDo": [
+        "Translate Scenarios into E2E code"
+      ],
+      "state": "6-Mar: Scenario Gap Coverage MVP Complete. Next: Translate Scenarios into E2E code. Target ETA: 14-Mar. Prod ready by 14-Mar.",
+      "prodReady": "Partially",
+      "slackChannel": "#agentic_quality",
+      "docsLink": "Agentic Quality Lifecycle"
+    },
+    {
+      "id": "rcore-v2",
+      "stage": "Reviews",
+      "stageEmoji": "👀",
+      "name": "rCoRe v2",
+      "type": "Plugin",
+      "poc": "Nehal Singh",
+      "team": "DevEx",
+      "canDo": [
+        "AI PR reviewer live across all Razorpay private repos (Claude Code based SWE Agent platform)",
+        "2.9x more effective than V1 (30.88% acceptance vs 10.66%)",
+        "Repo-aware reviews — loads .claude/skills/ to enforce team standards",
+        "Inline actionable suggestions with concrete code fixes",
+        "Pre-Mortem built-in — DB, Kafka, Redis, circuit breaker checks on every PR",
+        "High-severity bug detection at 44.9% acceptance (~4x over V1)"
+      ],
+      "cantDo": [
+        "rCoRe v2++ improvements in progress (tracked in roadmap)"
+      ],
+      "state": "G.A. Live in all private and internal repos.",
+      "prodReady": "Yes",
+      "slackChannel": "#developer-experience",
+      "docsLink": "Spec Link"
+    },
+    {
+      "id": "code-review",
+      "stage": "Reviews",
+      "stageEmoji": "👀",
+      "name": "code-review",
+      "type": "Plugin",
+      "poc": "Nehal Singh",
+      "team": "DevEx",
+      "canDo": [
+        "Runs on dev's claude code terminal and mimics rCoRe v2 architecture to flag issues",
+        "Can be used to plan the fix and resolve comments on GitHub",
+        "Flags issues way before PR is raised"
+      ],
+      "cantDo": [],
+      "state": "Active. Local pre-commit review tool. Note: Use rCoRe flow instead.",
+      "prodReady": "No",
+      "slackChannel": "#developer-experience",
+      "docsLink": "https://razorpay.slack.com/archives/C0A8QFH9KEF/p1769576981294259"
+    },
+    {
+      "id": "gandalf-mcp",
+      "stage": "Infra",
+      "stageEmoji": "⚙️",
+      "name": "Gandalf MCP",
+      "type": "MCP",
+      "poc": "Varun Saluja",
+      "team": "DevOps",
+      "canDo": [
+        "Database automation and access management via MCP",
+        "Redash query integration, RBAC approval workflows",
+        "Schema management and DB provisioning"
+      ],
+      "cantDo": [],
+      "state": "Live",
+      "prodReady": "Yes",
+      "slackChannel": "#gandalf",
+      "docsLink": ""
+    },
+    {
+      "id": "brahmos-mcp",
+      "stage": "Infra",
+      "stageEmoji": "⚙️",
+      "name": "Brahmos MCP",
+      "type": "MCP",
+      "poc": "Simon Rajan",
+      "team": "DevOps",
+      "canDo": [
+        "AWS resource lifecycle management (IAM, SQS, SNS, S3, Lambda, DynamoDB, CloudFront, DNS)",
+        "~85x faster provisioning vs manual",
+        "Now moved to Claude Skills"
+      ],
+      "cantDo": [],
+      "state": "Active. Moved to Claude Skills.",
+      "prodReady": "Yes",
+      "slackChannel": "#tech_announcements",
+      "docsLink": ""
+    },
+    {
+      "id": "helm-mcp",
+      "stage": "Infra",
+      "stageEmoji": "⚙️",
+      "name": "Helm MCP",
+      "type": "MCP",
+      "poc": "Simon Rajan",
+      "team": "DevOps",
+      "canDo": [
+        "Kubernetes Helm chart management via MCP",
+        "Release management and chart version control"
+      ],
+      "cantDo": [],
+      "state": "Preview",
+      "prodReady": "No",
+      "slackChannel": "",
+      "docsLink": ""
+    },
+    {
+      "id": "terrastack-mcp",
+      "stage": "Infra",
+      "stageEmoji": "⚙️",
+      "name": "Terrastack MCP",
+      "type": "MCP",
+      "poc": "Soji Antony",
+      "team": "DevOps",
+      "canDo": [
+        "Terraform-based infrastructure provisioning via MCP",
+        "IaC resource management and state operations"
+      ],
+      "cantDo": [],
+      "state": "Under development",
+      "prodReady": "No",
+      "slackChannel": "#tech-aiops",
+      "docsLink": ""
+    },
+    {
+      "id": "gng-skill",
+      "stage": "Infra",
+      "stageEmoji": "⚙️",
+      "name": "GNG Skill",
+      "type": "Skill",
+      "poc": "Simon Rajan",
+      "team": "DevOps",
+      "canDo": [
+        "Production readiness (Go-No-Go) validation skill",
+        "Automated DevOps checklist validation before deployment"
+      ],
+      "cantDo": [
+        "Devops checklist automated. Waiting for others skill from security, compliance, i18n, Quality and Dataorg"
+      ],
+      "state": "Partially complete",
+      "prodReady": "Partially",
+      "slackChannel": "",
+      "docsLink": ""
+    },
+    {
+      "id": "infra-agent-ready",
+      "stage": "Infra",
+      "stageEmoji": "⚙️",
+      "name": "Infra-agent-ready",
+      "type": "Plugin",
+      "poc": "Nehalramsurya Balamurali",
+      "team": "DevOps",
+      "canDo": [
+        "Auto discover infra resources of any given application",
+        "Create a metadata-infra.md file in the app repo"
+      ],
+      "cantDo": [],
+      "state": "In development",
+      "prodReady": "Yes",
+      "slackChannel": "",
+      "docsLink": ""
+    },
+    {
+      "id": "observability-mcp",
+      "stage": "Infra",
+      "stageEmoji": "⚙️",
+      "name": "Observability MCP",
+      "type": "MCP",
+      "poc": "Saijal Shrivastava",
+      "team": "DevOps",
+      "canDo": [],
+      "cantDo": [],
+      "state": "",
+      "prodReady": "No",
+      "slackChannel": "",
+      "docsLink": ""
+    },
+    {
+      "id": "tejas",
+      "stage": "Deployments",
+      "stageEmoji": "🚀",
+      "name": "Tejas",
+      "type": "Plugin",
+      "poc": "Nehalramsurya Balamurali",
+      "team": "DevOps",
+      "canDo": [
+        "Currently only support AI AWS Cluster deployments",
+        "Fully automates application deployment lifecycle — source code to running K8s service using AI-powered multi-agent architecture",
+        "Dynamically analyzes code repositories to auto-generate Razorpay-compliant Dockerfiles, GitHub Actions workflows, and Helm charts",
+        "Autonomously provisions infrastructure like PostgreSQL databases and AWS resources",
+        "Handles DevRev cost approvals and Slack notifications",
+        "Enforces security/quality gates with Checkov IaC scans on Terraform and Kubernetes manifests before merging",
+        "Orchestrates release via Spinnaker, Credstash secrets injection, built-in recovery to resume or fix failed steps"
+      ],
+      "cantDo": [
+        "Deploy to RSL and cell accounts"
+      ],
+      "state": "G.A. 2 apps live in production",
+      "prodReady": "Yes",
+      "slackChannel": "#tech-aiops",
+      "docsLink": "https://github.com/razorpay/infra-tools/blob/tejas-v2/tejas-ci-cd-agent-v2/README.md"
+    },
+    {
+      "id": "spinnaker-mcp",
+      "stage": "Deployments",
+      "stageEmoji": "🚀",
+      "name": "Spinnaker MCP",
+      "type": "MCP",
+      "poc": "Nanda Kishore Bhattaru",
+      "team": "DevOps",
+      "canDo": [
+        "Generate Canary /Scale / Rotate / Rollback V3 pipelines from natural language",
+        "Debug live pipeline failures",
+        "Fetch the pipeline and latest execution information if already exists",
+        "Cross Region deployment status"
+      ],
+      "cantDo": [
+        "Agents triggering pipeline executions",
+        "Onboarding a brand new K8s cluster onto any regional Spinnaker"
+      ],
+      "state": "G.A",
+      "prodReady": "Yes",
+      "slackChannel": "#tech_spinnaker",
+      "docsLink": "https://github.com/razorpay/mcp/tree/master/spinnaker"
+    },
+    {
+      "id": "spinnaker-ops-assistant-skill",
+      "stage": "Deployments",
+      "stageEmoji": "🚀",
+      "name": "Spinnaker Ops Assistant Skill",
+      "type": "Skill",
+      "poc": "Nanda Kishore Bhattaru",
+      "team": "DevOps",
+      "canDo": [
+        "Pipeline generation and operations assistance"
+      ],
+      "cantDo": [],
+      "state": "G.A",
+      "prodReady": "Yes",
+      "slackChannel": "#tech_spinnaker",
+      "docsLink": "https://github.com/razorpay/agent-skills/blob/master/infrastructure/skills/spinnaker-ops-assistant/SKILL.md"
+    },
+    {
+      "id": "spinnaker-v3-pipeline-migrator",
+      "stage": "Deployments",
+      "stageEmoji": "🚀",
+      "name": "Spinnaker V3 Pipeline Migrator",
+      "type": "Multi-Agent",
+      "poc": "Nanda Kishore Bhattaru",
+      "team": "DevOps",
+      "canDo": [
+        "Multi-agent plugin for migrating Spinnaker pipelines from V1/V2 (deploy.razorpay.com) to V3 templated pipelines (deploy-in.razorpay.com) in the Mumbai-RSPL region"
+      ],
+      "cantDo": [
+        "Prepare V3 pipelines for regions other than Mumbai-RSPL"
+      ],
+      "state": "Preview. Mumbai-RSPL region only.",
+      "prodReady": "Partially",
+      "slackChannel": "N/A",
+      "docsLink": "https://github.com/razorpay/claude-plugins/tree/master/plugins/spinnaker-v3-pipeline-migrator"
+    },
+    {
+      "id": "backend-engineer-plugin",
+      "stage": "Harness",
+      "stageEmoji": "🎯",
+      "name": "Backend Engineer Plugin",
+      "type": "Plugin",
+      "poc": "Neel (stuckinforloop)",
+      "team": "DevEx",
+      "canDo": [
+        "5-phase compound engineering workflow: brainstorm > plan > work > review > compound",
+        "19 specialized agents (5 research + 7 parallel review + documentation)",
+        "Strict TDD enforcement — tests must fail before implementation",
+        "Auto-detects Razorpay patterns (goutils, foundation)",
+        "Skills: api-proto-design, go-panic-recovery, k8s-debugger, logs-investigator",
+        "Commands: /be:brainstorm, /be:plan, /be:work, /be:review, /be:compound, /be:k8s-debug, /be:logs"
+      ],
+      "cantDo": [],
+      "state": "Early version released with Pilot users. Ready for small and medium tasks.",
+      "prodReady": "Partially",
+      "slackChannel": "#developer-experience",
+      "docsLink": "https://github.com/razorpay/claude-plugins/tree/master/plugins/backend-engineer"
+    },
+    {
+      "id": "skill-connector",
+      "stage": "Harness",
+      "stageEmoji": "🎯",
+      "name": "Skill Connector",
+      "type": "Plugin",
+      "poc": "Nanda Kishore Bhattaru",
+      "team": "DevOps",
+      "canDo": [
+        "Skill-connector provides manifest-driven, multi-phase, dependent-execution orchestration",
+        "Any workflow that needs 'do A, then B, fan-out to C & D in parallel, gate on E' can be a skill",
+        "Take-it-live (code-to-prod) is the first in its umbrella"
+      ],
+      "cantDo": [],
+      "state": "G.A",
+      "prodReady": "Yes",
+      "slackChannel": "#tech_spinnaker",
+      "docsLink": "https://github.com/razorpay/claude-plugins/tree/master/plugins/skill-connector"
+    },
+    {
+      "id": "take-it-live",
+      "stage": "Harness",
+      "stageEmoji": "🎯",
+      "name": "Take-it-live",
+      "type": "Skill",
+      "poc": "Nanda Kishore Bhattaru",
+      "team": "DevOps",
+      "canDo": [
+        "Golden path orchestrator for deploying services to production",
+        "Lifecycle phases: scaffold, provision, deploy, validate",
+        "Archetype scaffolding and policy enforcement"
+      ],
+      "cantDo": [],
+      "state": "G.A (as part of skill-connector plugin)",
+      "prodReady": "Yes",
+      "slackChannel": "#tech_spinnaker",
+      "docsLink": "https://github.com/razorpay/claude-plugins/tree/master/plugins/skill-connector/skills/take-it-live"
+    },
+    {
+      "id": "cloud-agents-vyom",
+      "stage": "Harness",
+      "stageEmoji": "🎯",
+      "name": "Cloud Agents (Vyom)",
+      "type": "Platform",
+      "poc": "Nikhilesh Chamarthi",
+      "team": "DevEx",
+      "canDo": [
+        "Cloud Agents platform (Vyom/SWE-Agent) for automating SDLC workflows",
+        "Autonomous agents and context-aware processing",
+        "Uses skills from agent-skills repo and repo-level skills on selected repo",
+        "DevRev ticket handoff — agent takes over and raises PRs full complete SDLC loop"
+      ],
+      "cantDo": [],
+      "state": "Launched (Beta) - https://vyom.concierge.stage.razorpay.in/. Onboarding lower environment usecases first.",
+      "prodReady": "Partially",
+      "slackChannel": "@agentic-sdlc",
+      "docsLink": "https://vyom.concierge.stage.razorpay.in/"
+    },
+    {
+      "id": "agent-catalog",
+      "stage": "Harness",
+      "stageEmoji": "🎯",
+      "name": "Agent Catalog",
+      "type": "Plugin",
+      "poc": "Nikhilesh Chamarthi",
+      "team": "DevEx",
+      "canDo": [
+        "Org-wide catalog of autonomous agents, to be used in Cloud Agents",
+        "Can be triggered via DevRev, Slack, etc.",
+        "Teams contribute agents to agents/ directory, executes headless via claude --agent",
+        "Current agent: gng-readiness (Go/No-Go production deployment checks, raises draft fix PRs)"
+      ],
+      "cantDo": [],
+      "state": "Example",
+      "prodReady": "No",
+      "slackChannel": "N/A",
+      "docsLink": "https://github.com/razorpay/claude-plugins/tree/master/plugins/agent-catalog"
+    },
+    {
+      "id": "multi-agent-orchestration",
+      "stage": "Harness",
+      "stageEmoji": "🎯",
+      "name": "Multi-agent Orchestration",
+      "type": "Plugin",
+      "poc": "Nikhilesh Chamarthi",
+      "team": "DevEx",
+      "canDo": [
+        "Example plugin demonstrating 6 multi-agent orchestration patterns from Claude Code",
+        "Includes working agent definitions, skills, and real test results with event traces from headless execution"
+      ],
+      "cantDo": [],
+      "state": "Example",
+      "prodReady": "No",
+      "slackChannel": "N/A",
+      "docsLink": "https://github.com/razorpay/claude-plugins/tree/master/plugins/multi-agent-orchestration"
+    }
+  ]
+}

@@ -1,0 +1,81 @@
+You are a senior reliability engineer tasked with analyzing failure points and resilience mechanisms for a technical project.
+
+Project: {project_name}
+Problem Statement: {problem_statement}
+
+Context Generator Analysis:
+- Potential Failure Points: {failure_points}
+- Retry Mechanisms: {retry_mechanisms}
+- Idempotency Mechanisms: {idempotency_mechanisms}
+- External API Calls: {external_calls}
+- Database Operations: {db_operations}
+
+Your task is to provide a comprehensive analysis of the system's failure points and resilience mechanisms.
+
+### 8.1. Failure Points & Resilience Analysis
+
+#### 1. Identified Failure Points
+Analyze the failure points identified by the Context Generator:
+- Categorize failure points by severity and impact
+- Identify common patterns or root causes
+- Highlight critical areas that need immediate attention
+- Provide specific code locations and context for each failure point
+
+#### 2. External Dependencies
+Analyze the external API calls and their potential failure modes:
+- Identify dependencies that lack proper error handling
+- Evaluate timeout configurations and circuit breaker patterns
+- Assess the impact of external service failures on the system
+- Recommend improvements for handling external dependency failures
+
+#### 3. Database Resilience
+Analyze the database operations for potential failures:
+- Identify operations that could lead to data inconsistency
+- Evaluate transaction boundaries and isolation levels
+- Assess the impact of database failures on the system
+- Recommend improvements for database resilience
+
+#### 4. Retry Mechanisms
+Evaluate the existing retry mechanisms:
+- Assess the effectiveness of current retry strategies
+- Identify areas where retries are missing but needed
+- Recommend improvements to retry policies (backoff, jitter, limits)
+- Provide specific implementation recommendations
+
+#### 5. Idempotency Analysis
+Analyze the idempotency mechanisms in the system:
+- Evaluate the effectiveness of current idempotency approaches
+- Identify operations that should be idempotent but aren't
+- Recommend improvements to ensure safe retries and duplicates handling
+- Provide specific implementation recommendations
+
+#### 6. Resilience Patterns
+Recommend additional resilience patterns that could benefit the system:
+- Circuit breakers
+- Bulkheads
+- Rate limiting
+- Fallbacks
+- Graceful degradation
+- Chaos engineering approaches
+
+#### 7. Monitoring & Observability
+Recommend monitoring and observability improvements:
+- Key metrics to track for each identified failure point
+- Log patterns to implement for better debugging
+- Alerting strategies for early detection of failures
+- Dashboards to visualize system health
+
+#### 8. Resilience Testing Strategy
+Propose a testing strategy to validate resilience:
+- Unit tests for edge cases
+- Integration tests for dependency failures
+- Chaos engineering experiments
+- Load testing scenarios
+
+#### 9. Implementation Roadmap
+Provide a prioritized roadmap for implementing resilience improvements:
+- Critical short-term fixes
+- Medium-term architectural improvements
+- Long-term resilience strategy
+
+Your analysis should be thorough, specific to the project's codebase, and provide clear, actionable recommendations for improving system resilience. 

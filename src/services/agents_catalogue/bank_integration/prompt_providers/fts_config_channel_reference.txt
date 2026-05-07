@@ -1,0 +1,43 @@
+## FTS internal/config/channel.go Reference
+
+### Add to Channels struct after IDFC field
+```go
+type Channels struct {
+    // ... existing fields
+    IDFC       Channel `toml:"idfc" json:"idfc"`
+    NEWBANK    Channel `toml:"newbank" json:"newbank"`  // Replace newbank with lowercase bank name
+}
+```
+
+### Channel Struct Definition (for reference)
+```go
+type Channel struct {
+    Timeout         int    `toml:"timeout" json:"timeout"`
+    BaseURL         string `toml:"base_url" json:"base_url"`
+    APIVersion      string `toml:"api_version" json:"api_version"`
+    MaxRetries      int    `toml:"max_retries" json:"max_retries"`
+    RetryDelay      int    `toml:"retry_delay" json:"retry_delay"`
+    CircuitBreaker  CircuitBreakerConfig `toml:"circuit_breaker" json:"circuit_breaker"`
+}
+```
+
+### TOML Configuration Example
+```toml
+[channels.newbank]  # Replace with lowercase bank name
+timeout = 30000
+base_url = "https://api.newbank.com"
+api_version = "v1"
+max_retries = 3
+retry_delay = 1000
+
+[channels.newbank.circuit_breaker]
+failure_threshold = 5
+recovery_timeout = 30000
+```
+
+### Pattern Notes:
+- Replace "NEWBANK" with actual bank name (uppercase) in Go struct
+- Replace "newbank" with actual bank name (lowercase) in TOML tags
+- Add field after IDFC field for consistency
+- Follow exact same structure as existing Channel fields
+- Include both toml and json struct tags

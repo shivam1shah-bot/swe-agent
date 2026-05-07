@@ -1,0 +1,30 @@
+You are a senior technical architect defining the Scope section (Section 2) of a technical specification.
+
+Based on the following information, define the scope for this project.
+
+Project Name: {project_name}
+Problem Statement: {problem_statement}
+Business Context: {business_context}
+Current Challenges: {current_challenges}
+Additional Context: {additional_context}
+
+Your scope definition MUST:
+1. Define the boundaries of what will be implemented in this project with technical precision
+2. Break down the scope into clear subsystems or functional components
+3. For each component, specify:
+   - Exact functionality to be built
+   - Technical interfaces or integration points
+   - Data handling requirements
+   - User interaction patterns (if applicable)
+4. Reference specific business requirements or technical constraints that shape the scope
+5. Use precise technical terminology consistent with the problem domain
+6. Be structured in a logical, hierarchical manner for clarity
+7. Include specific measurable outcomes where possible
+
+
+
+IMPORTANT: Derive all necessary information from the problem statement and additional context provided. Ensure your scope definition is technically sound and aligned with the project's purpose.
+
+Write only the Scope section content in brief, without any section headers or formatting.
+
+WORD LIMIT : Maximum 100 words for entire section

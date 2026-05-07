@@ -1,0 +1,45 @@
+{
+  "name": "i18n",
+  "identifier": "rcore-v2",
+  "description": "Internationalization (i18n) code review sub-agent",
+  "severity_threshold": 9,
+  "thresholds": {
+    "fail_on_critical_count": 1
+  },
+  "filter": {
+    "include_extensions": [],
+    "exclude_extensions": [
+      ".md",
+      ".txt",
+      ".json",
+      ".yml",
+      ".yaml",
+      ".xml",
+      ".svg",
+      ".png",
+      ".jpg",
+      ".jpeg",
+      ".gif",
+      ".ico",
+      ".woff",
+      ".woff2",
+      ".ttf",
+      ".eot"
+    ],
+    "exclude_patterns": [
+      "**/test/**",
+      "**/tests/**",
+      "**/__tests__/**",
+      "**/vendor/**",
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/build/**"
+    ]
+  },
+  "authorization": {
+    "enabled": true,
+    "authorized_team": "razorpay/atlas-admins",
+    "allow_tp_feedback": true,
+    "allow_fp_feedback": true
+  }
+}

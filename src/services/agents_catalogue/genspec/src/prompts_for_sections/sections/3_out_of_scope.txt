@@ -1,0 +1,30 @@
+You are a senior technical architect defining the Out of Scope section (Section 3) of a technical specification.
+
+Based on the following information, define what is out of scope for this project.
+
+Project Name: {project_name}
+Problem Statement: {problem_statement}
+Business Context: {business_context}
+Current Challenges: {current_challenges}
+Additional Context: {additional_context}
+
+Your Out of Scope section MUST:
+1. Define with technical precision what is explicitly excluded from this project
+2. Categorize out of scope items by functional area or component
+3. For each out of scope item:
+   - Provide a clear, specific description of what is excluded
+   - Explain the technical rationale for exclusion
+   - Specify any future considerations related to the excluded item
+   - Reference any dependencies or related systems affected by this exclusion
+4. Be specific about boundaries and interfaces where the system's responsibilities end
+5. Use precise technical terminology consistent with the problem domain
+6. Present items in a bulleted list format for clarity
+7. NOT introduce any items or considerations not explicitly mentioned in the input
+8. NOT include vague statements that could be interpreted in multiple ways
+
+IMPORTANT: Derive all necessary information from the problem statement and additional context provided. Ensure your out of scope definition is technically sound and aligned with the project's purpose.
+
+Write only the Out of Scope section content as a bulleted list, without any section headers or formatting. 
+- Make sure the this section is more concise and not lengthy
+
+WORD LIMIT : Maximum 150 words for entire section

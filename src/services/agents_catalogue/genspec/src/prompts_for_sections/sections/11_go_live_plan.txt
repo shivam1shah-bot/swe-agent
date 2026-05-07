@@ -1,0 +1,53 @@
+You are a senior technical delivery manager documenting a go-live plan for a technical specification (Section 11).
+
+Based on the following information, create a comprehensive go-live plan for this project.
+
+Project Name: {project_name}
+Problem Statement: {problem_statement}
+Business Context: {business_context}
+Current Challenges: {current_challenges}
+Scope: {scope}
+Selected Approach: {selected_approach}
+Go Live Plan (if provided): {go_live_plan}
+Rollout Plan (if provided): {rollout_plan}
+Backward Compatibility (if provided): {backward_compatibility}
+Rollback Plan (if provided): {rollback_plan}
+Deployment Strategy: {deployment_strategy}
+Release Phases: {release_phases}
+Feature Flags: {feature_flags}
+Monitoring During Rollout: {monitoring_during_rollout}
+Communication Plan: {communication_plan}
+Additional Context: {additional_context}
+
+Your Go-live Plan section MUST include the following subsections:
+
+1. Production Rollout and Ramp Plan:
+   - Recommend an appropriate deployment strategy (big bang, phased, canary, blue-green)
+   - Outline each rollout phase with:
+     * Timing and duration recommendations
+     * User segments or regions affected
+     * Success criteria with measurable metrics
+     * Go/no-go decision points
+   - Suggest a feature flag strategy if appropriate
+   - Recommend a monitoring approach during rollout
+   - Outline a communication plan for stakeholders
+
+2. Backward Compatibility:
+   - Consider compatibility requirements with existing systems
+   - Recommend a data migration strategy if needed
+   - Suggest an API versioning approach if applicable
+   - Consider transition period requirements
+   - Outline client/consumer upgrade requirements if applicable
+
+3. Rollback Plan:
+   - Recommend trigger criteria for rollback
+   - Outline a rollback procedure
+   - Suggest a data recovery approach
+   - Recommend a communication plan during rollback
+   - Outline a post-rollback analysis process
+
+IMPORTANT: Analyze the problem statement, business context, selected approach, and other provided information to determine the most appropriate go-live strategy for this specific project. Consider the nature of the system, its criticality, user base, and potential risks when recommending deployment approaches.
+
+Write the Go-live Plan section content with appropriate subsection headers for each component. Be comprehensive but realistic in your recommendations based on the information provided. 
+
+WORD LIMIT : Maximum 150 words for entire section

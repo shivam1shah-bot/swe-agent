@@ -1,0 +1,66 @@
+You are a senior technical writer documenting the Introduction section (Section 2) of a technical specification.
+
+Project Name: {project_name}
+Problem Statement: {problem_statement}
+Business Context: {business_context}
+Current State: {current_state}
+Project Goals: {project_goals}
+Additional Context: {additional_context}
+
+Write a CONCISE Introduction with these subsections:
+
+2. Include the following subsections with detailed content:
+
+   a. Background:
+      - Provide relevant historical context for the project
+      - Explain the business or technical drivers that led to this initiative
+      - Reference any previous projects, systems, or decisions that influence this work
+      - Describe the current state of the system or process being addressed
+      - Include specific details about existing limitations, pain points, or opportunities
+
+   b. Purpose:
+      - Clearly articulate the primary purpose of the proposed solution
+      - Explain how it addresses the problem statement
+      - Highlight the key benefits and value proposition
+      - Connect the technical solution to business outcomes
+      - Include specific metrics or goals the solution aims to achieve
+
+   c. Stakeholders:
+      - Identify key stakeholders and their interests in the project
+      - Describe how different user groups or systems will be affected
+      - Explain the impact on operations, maintenance, or support teams
+      - Detail any external dependencies or third-party considerations
+
+   d. Objectives:
+      - List specific, measurable objectives for the project
+      - Prioritize objectives if multiple goals exist
+      - Connect each objective to business requirements or technical needs
+      - Include success criteria for each objective
+      - Use numbered or bulleted lists for clarity
+
+   e. Approach Overview:
+      - Provide a high-level summary of the solution approach
+      - Explain the rationale for the chosen direction
+      - Highlight any key architectural decisions or technology choices
+      - Set expectations for what will be detailed in later sections
+      - Include a brief roadmap or implementation strategy
+
+3. The entire section must:
+   - Use precise technical terminology consistent with the domain
+   - Maintain a clear, logical flow from problem to solution
+   - Provide sufficient context for readers unfamiliar with the project
+   - Set the stage for the detailed technical content that follows
+   - Be concise yet comprehensive (typically 2-4 pages)
+   - NOT introduce detailed technical specifications that belong in later sections
+   - NOT make subjective claims without supporting evidence
+   - NOT introduce any information not explicitly mentioned in the input
+
+IMPORTANT: 
+- If specific information is missing from the input, do NOT invent or assume details. Focus exclusively on what is explicitly provided.
+- Use bullet points and numbered lists for clarity and readability
+- Use tables for presenting comparative information or summarizing key points
+- Include specific metrics, dates, or figures wherever available
+- Make sure the this section is more concise and not lengthy
+
+Write the Introduction section with appropriate subsections, ensuring it provides comprehensive context for the technical specification that follows. 
+WORD LIMIT : Maximum 150 words for entire section

@@ -1,0 +1,67 @@
+# Development Dockerfile for the SWE Agent UI service
+#
+# YARN 4 MIGRATION NOTES:
+# - Uses 'yarn install --immutable' for reproducible builds
+# - Installs ALL dependencies (dev + prod) for development
+# - Smoke tests run to validate image before runtime
+# - Maintains parity with production Dockerfile for issue detection
+
+FROM harbor.razorpay.com/razorpay/rzp-docker-image-inventory-multi-arch:rzp-golden-image-base-node-24-alpine3.23
+
+WORKDIR /app
+
+# Copy Yarn 4 configuration first (required for corepack/yarn 4)
+COPY ui/.yarnrc.yml ui/package.json ui/yarn.lock ./
+COPY ui/.yarn/releases ./.yarn/releases
+
+# Enable Corepack for Yarn 4 support
+RUN corepack enable && \
+    mkdir -p .yarn && chmod -R 755 .yarn
+
+# Configure npm to bypass SSL verification for local development
+# This helps with corporate proxies and self-signed certificates
+# Note: Yarn 4 respects npm configuration for registry operations
+RUN npm config set strict-ssl false
+
+# Install ALL dependencies (including dev dependencies for development)
+# --immutable: fails if yarn.lock would be modified (reproducible builds)
+# --network-timeout: 5 min timeout for slow networks
+# Retry logic handles transient network failures
+RUN for i in 1 2 3; do \
+        yarn install --immutable --network-timeout 300000 && break || \
+        (echo "Attempt $i failed, clearing cache and retrying..." && yarn cache clean && sleep 5); \
+    done
+
+# Copy source code
+COPY ui/src ./src
+COPY ui/environments ./environments
+COPY ui/public ./public
+COPY ui/index.html ./
+COPY ui/vite.config.ts ./
+COPY ui/server.js ./
+COPY ui/tsconfig*.json ./
+COPY ui/tailwind.config.js ./
+COPY ui/postcss.config.js ./
+COPY ui/eslint.config.js ./
+
+# Set build arguments and environment variables
+ARG GIT_COMMIT_HASH
+ENV GIT_COMMIT_HASH=${GIT_COMMIT_HASH}
+ENV APP_NAME=swe-agent-ui
+ENV NODE_ENV=development
+ENV TZ=Asia/Kolkata
+ENV APP_ENV=dev_docker
+
+# SMOKE TESTS: Verify development image is functional
+# Tests: all deps exist (dev + prod: express, pino, vite, typescript),
+#        source files present, build works, server starts and responds to /health
+# Build fails if any test fails - catches issues before production
+# Maintains parity with production smoke tests for early issue detection
+COPY build/docker/scripts/smoke-test-ui-dev.sh /tmp/smoke-test-ui-dev.sh
+RUN chmod +x /tmp/smoke-test-ui-dev.sh && /tmp/smoke-test-ui-dev.sh && rm /tmp/smoke-test-ui-dev.sh
+
+# Expose the UI port
+EXPOSE 8001
+
+# Command to run the development server (Vite with HMR)
+CMD ["yarn", "dev"]

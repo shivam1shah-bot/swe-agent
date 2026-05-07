@@ -1,0 +1,73 @@
+PAYOUTS MODEL TEST REFERENCE - internal/app/fundAccountCache/model_test.go
+
+REQUIRED MODIFICATIONS FOR BANK INTEGRATION:
+
+FILE: payouts/internal/app/fundAccountCache/model_test.go
+
+ADD TEST CASE TO TestFundAccountModel FUNCTION:
+LOCATION: func TestFundAccountModel(t *testing.T) - in the tests slice
+PATTERN: Follow ICICI pattern - add test case that validates virtual bank account detection
+
+REFERENCE PATTERN (ICICI):
+```go
+{
+    name:        "check if it is a razorpayX virtual account",
+    fundAccount: getFundAccountModel(),
+    asserts: func(fundAccount *fa.FundAccount) {
+        fundAccount.BankAccount.AccountNumber = "123456"
+        flag, err := fundAccount.IsRazorpayVirtualBankAccount()
+        assert.Equal(t, false, flag)
+        assert.Equal(t, nil, err)
+
+        fundAccount.BankAccount.AccountNumber = "34341"                                          // <-- ICICI PREFIX
+        fundAccount.BankAccount.Ifsc = appConstants.BankIdentifier[appConstants.ICICI]          // <-- ICICI REFERENCE
+        fundAccount.BankAccount.BankIdentifier = appConstants.BankIdentifier[appConstants.ICICI] // <-- ICICI REFERENCE
+        flag, err = fundAccount.IsRazorpayVirtualBankAccount()
+        assert.Equal(t, true, flag)
+        assert.Equal(t, nil, err)
+
+        fundAccount.BankAccount.AccountNumber = "7878781212341234"
+        fundAccount.BankAccount.Ifsc = appConstants.BankIdentifier[appConstants.YESBANK]
+        fundAccount.BankAccount.BankIdentifier = appConstants.BankIdentifier[appConstants.YESBANK]
+        flag, err = fundAccount.IsRazorpayVirtualBankAccount()
+        assert.Equal(t, true, flag)
+        assert.Equal(t, nil, err)
+    },
+},
+```
+
+EXAMPLE NEW TEST CASE (following ICICI pattern):
+```go
+{
+    name:        "check virtual account detection for {BANKNAME}",
+    fundAccount: getFundAccountModel(),
+    asserts: func(fundAccount *fa.FundAccount) {
+        // Test with non-virtual account first
+        fundAccount.BankAccount.AccountNumber = "123456"
+        flag, err := fundAccount.IsRazorpayVirtualBankAccount()
+        assert.Equal(t, false, flag)
+        assert.Equal(t, nil, err)
+
+        // Test with virtual account using bank's prefix
+        fundAccount.BankAccount.AccountNumber = "{PREFIX}1212341234"                               // <-- USE BANK PREFIX
+        fundAccount.BankAccount.Ifsc = appConstants.BankIdentifier[appConstants.{BANKNAME}]       // <-- NEW BANK 
+        fundAccount.BankAccount.BankIdentifier = appConstants.BankIdentifier[appConstants.{BANKNAME}] // <-- NEW BANK
+        flag, err = fundAccount.IsRazorpayVirtualBankAccount()
+        assert.Equal(t, true, flag)
+        assert.Equal(t, nil, err)
+    },
+},
+```
+
+CRITICAL REQUIREMENTS:
+- Add test case to existing tests slice in TestFundAccountModel function
+- Use one of the virtual account prefixes defined in PrefixToIfscMappingForVirtualAccounts
+- Reference appConstants.BankIdentifier[appConstants.{BANKNAME}] for IFSC
+- Test both positive (virtual account) and negative (regular account) cases
+- Maintain exact function signature and assertion patterns
+
+PURPOSE:
+This test ensures:
+- Virtual account detection works correctly for the new bank
+- IFSC mapping is properly configured
+- Fund account validation logic handles the new bank correctly

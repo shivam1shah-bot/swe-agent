@@ -1,0 +1,353 @@
+# Docker Compose configuration for local development environment
+# This file orchestrates multiple containers (app, worker, database, localstack) 
+# to run together with proper networking, volumes, and dependencies.
+# Not intended for production use - production environments should use
+# proper container orchestration platforms like Kubernetes or AWS ECS.
+services:
+  # Shared base backend image for API, Worker, and MCP services
+  # Commented out - services now build independently
+  # Uncomment this section if you want to use shared base image for faster builds
+  # swe-agent-base-backend:
+  #   build:
+  #     context: .
+  #     dockerfile: build/docker/dev/Dockerfile.base-backend.dev
+  #   image: razorpay/swe-agent-base-backend:dev
+  #   container_name: razorpay-swe-agent-base-backend
+  #   # This service only builds the base image, doesn't run a container
+  #   command: ["echo", "Base backend image built successfully"]
+  #   networks:
+  #     - swe-agent-dev
+
+  swe-agent-ui:
+    build:
+      context: .
+      dockerfile: build/docker/dev/Dockerfile.ui.dev
+    image: razorpay/swe-agent-ui
+    container_name: razorpay-swe-agent-ui
+    ports:
+      - "28001:8001"
+    environment:
+      - APP_ENV=dev_docker
+      - HOST=0.0.0.0
+      - PORT=8001
+    volumes:
+      - ./ui:/app
+      - /app/node_modules
+    networks:
+      - swe-agent-dev
+    restart: unless-stopped
+
+  # API Service
+  swe-agent-api:
+    build:
+      context: .
+      dockerfile: build/docker/dev/Dockerfile.api.dev
+      args:
+        - GITHUB_TOKEN=${GITHUB_TOKEN}
+    image: razorpay/swe-agent-api
+    container_name: razorpay-swe-agent-api
+    ports:
+      - "28002:8002"
+      - "28080:8080"  # Metrics endpoint port
+    environment:
+      - APP_ENV=dev_docker
+      - CONTAINER_TYPE=api
+      - DB_HOST=db
+      - DB_USER=swe_agent
+      - DB_PASSWORD=swe_agent_password
+      - DB_NAME=swe_agent
+    volumes:
+      - .:/app
+    depends_on:
+      # swe-agent-base-backend:
+      #   condition: service_completed_successfully
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+    networks:
+      - swe-agent-dev
+    restart: unless-stopped
+
+  # Worker service
+  swe-agent-task-execution-worker:
+    build:
+      context: .
+      dockerfile: build/docker/dev/Dockerfile.worker.task_execution.dev
+      args:
+        - GITHUB_TOKEN=${GITHUB_TOKEN}
+    image: razorpay/swe-agent-task-execution-worker
+    container_name: razorpay-swe-agent-task-execution-worker
+    ports:
+      - "28081:8080"  # Worker metrics endpoint
+    environment:
+      - APP_ENV=dev_docker
+      - CONTAINER_TYPE=worker
+      - DB_HOST=db
+      - DB_USER=swe_agent
+      - DB_PASSWORD=swe_agent_password
+      - DB_NAME=swe_agent
+      - DEVREV_API_TOKEN=${DEVREV_API_TOKEN}
+      - SLACK_TEAM_ID=${SLACK_TEAM_ID}
+      - SLACK_MCP_XOXP_TOKEN=${SLACK_MCP_XOXP_TOKEN}
+      - SLACK_MCP_ADD_MESSAGE_TOOL=${SLACK_MCP_ADD_MESSAGE_TOOL}
+      - GCP__GOOGLE_DOCS_CREDENTIALS_JSON=${GCP__GOOGLE_DOCS_CREDENTIALS_JSON}
+      - GOOGLE_APPLICATION_CREDENTIALS=/root/.config/gcloud/application_default_credentials.json
+    volumes:
+      - .:/app
+      - ~/.config/gcloud:/root/.config/gcloud:ro
+    depends_on:
+      # swe-agent-base-backend:
+      #   condition: service_completed_successfully
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+    networks:
+      - swe-agent-dev
+    restart: unless-stopped
+
+  # Code Review Worker service
+  swe-agent-code-review-worker:
+    build:
+      context: .
+      dockerfile: build/docker/dev/Dockerfile.worker.code_review.dev
+      args:
+        - GITHUB_TOKEN=${GITHUB_TOKEN}
+      secrets:
+        - github_token
+    image: razorpay/swe-agent-code-review-worker
+    container_name: razorpay-swe-agent-code-review-worker
+    ports:
+      - "28082:8080"  # Review worker metrics endpoint
+    environment:
+      - APP_ENV=dev_docker
+      - CONTAINER_TYPE=worker
+      - DB_HOST=db
+      - DB_USER=swe_agent
+      - DB_PASSWORD=swe_agent_password
+      - DB_NAME=swe_agent
+    volumes:
+      - .:/app
+    # Memory limit increased to handle 5 parallel Claude Code processes
+    # (PR description + 4 sub-agents: bug, security, code_quality, style)
+    mem_limit: 16g
+    memswap_limit: 16g
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+    networks:
+      - swe-agent-dev
+    restart: unless-stopped
+
+  # Scheduler service — dedicated single-replica pod for cron-based skill execution
+  swe-agent-scheduler:
+    build:
+      context: .
+      dockerfile: build/docker/dev/Dockerfile.worker.scheduler.dev
+      args:
+        - GITHUB_TOKEN=${GITHUB_TOKEN}
+    image: razorpay/swe-agent-scheduler
+    container_name: razorpay-swe-agent-scheduler
+    command: python commands/scheduler.py
+    environment:
+      - APP_ENV=dev_docker
+      - CONTAINER_TYPE=scheduler
+      - DB_HOST=db
+      - DB_USER=swe_agent
+      - DB_PASSWORD=swe_agent_password
+      - DB_NAME=swe_agent
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - swe-agent-dev
+    restart: unless-stopped
+
+# Comment Analyzer Worker service
+  swe-agent-comment-analyzer-worker:
+    build:
+      context: .
+      dockerfile: build/docker/dev/Dockerfile.worker.comment_analyzer.dev
+      args:
+        - GITHUB_TOKEN=${GITHUB_TOKEN}
+    image: razorpay/swe-agent-comment-analyzer-worker
+    container_name: razorpay-swe-agent-comment-analyzer-worker
+    ports:
+      - "28083:8080"  # Comment analyzer worker metrics endpoint
+    environment:
+      - APP_ENV=dev_docker
+      - CONTAINER_TYPE=worker
+      - DB_HOST=db
+      - DB_USER=swe_agent
+      - DB_PASSWORD=swe_agent_password
+      - DB_NAME=swe_agent
+      - PROMETHEUS_MULTIPROC_DIR=/app/tmp/prometheus
+      - GH_TOKEN=${GITHUB_TOKEN}  # GitHub CLI authentication
+      - GITHUB__TOKEN=${GITHUB_TOKEN}  # GitHub API token for config
+    volumes:
+      - .:/app
+      - ${HOME}/.config/gcloud:/root/.config/gcloud:ro  # Mount GCP credentials
+    mem_limit: 8g
+    memswap_limit: 8g
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      localstack:
+        condition: service_started
+    networks:
+      - swe-agent-dev
+    restart: unless-stopped
+  # Redis service for caching
+  redis:
+    # nosemgrep: razorpay.custom-docker-base-image-check-docker-compose
+    image: harbor.razorpay.com/proxy_dockerhub/redis:7.2-alpine
+    container_name: swe-agent-redis
+    ports:
+      - "26389:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - swe-agent-dev
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # LocalStack for local SQS simulation
+  localstack:
+    # nosemgrep: razorpay.custom-docker-base-image-check-docker-compose
+    image: localstack/localstack:3.0
+    container_name: swe-agent-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=sqs
+      - DEBUG=1
+      - AWS_DEFAULT_REGION=ap-south-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - SKIP_SSL_CERT_DOWNLOAD=1
+      - DISABLE_CORS_HEADERS=1
+    networks:
+      - swe-agent-dev
+    restart: unless-stopped
+
+  # Database service
+  db:
+    # nosemgrep: razorpay.custom-docker-base-image-check-docker-compose
+    image: mysql:8.0
+    container_name: swe-agent-db
+    ports:
+      - "23306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: swe_agent
+      MYSQL_USER: swe_agent
+      MYSQL_PASSWORD: swe_agent_password
+      # Ensure MySQL is ready faster
+      MYSQL_EXTRA_FLAGS: "--innodb-flush-log-at-trx-commit=0 --sync-binlog=0"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - swe-agent-dev
+    restart: unless-stopped
+    healthcheck:
+      # Health check that verifies database and user are ready
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -u swe_agent -pswe_agent_password && mysql -h localhost -u swe_agent -pswe_agent_password -e 'SELECT 1;'"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 40s
+
+  # MCP Service (Model Context Protocol)
+  swe-agent-mcp-server:
+    build:
+      context: .
+      dockerfile: build/docker/dev/Dockerfile.mcp_server.dev
+      args:
+        - GITHUB_TOKEN=${GITHUB_TOKEN}
+    image: razorpay/swe-agent-mcp-server
+    container_name: razorpay-swe-agent-mcp-server
+    ports:
+      - "28003:8003"
+    environment:
+      - APP_ENV=dev_docker
+      - CONTAINER_TYPE=mcp
+    volumes:
+      - .:/app
+    depends_on:
+      # swe-agent-base-backend:
+      #   condition: service_completed_successfully
+      swe-agent-api:
+        condition: service_started
+    networks:
+      - swe-agent-dev
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Webhook Receiver Service - receives events from external sources (DevRev, GitHub, etc.)
+  swe-agent-webhook-receiver:
+    build:
+      context: .
+      dockerfile: build/docker/dev/Dockerfile.webhook_receiver.dev
+    image: razorpay/swe-agent-webhook-receiver
+    container_name: razorpay-swe-agent-webhook-receiver
+    ports:
+      - "28004:8004"
+    environment:
+      - APP_ENV=dev_docker
+      - CONTAINER_TYPE=webhook_receiver
+    volumes:
+      - .:/app
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - swe-agent-dev
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+networks:
+  swe-agent-dev:
+    driver: bridge
+
+volumes:
+  db_data:
+    driver: local
+  redis_data:
+    driver: local
+  localstack_data:
+    driver: local
+
+secrets:
+  github_token:
+    environment: GITHUB_TOKEN

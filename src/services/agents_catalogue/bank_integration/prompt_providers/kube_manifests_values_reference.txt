@@ -1,0 +1,85 @@
+KUBE-MANIFESTS SERVICE INTEGRATION REFERENCE
+
+This reference provides patterns for integrating a new bank into the kube-manifests service by updating values.yaml files with worker replica configurations.
+
+## File Structure
+The main file to update:
+- kube-manifests/prod/fts/values.yaml
+
+Note: Template file creation is handled by a separate reference file (kube_manifests_templates_reference.txt)
+
+## Integration Pattern
+
+### 1. Update kube-manifests/prod/fts/values.yaml
+
+Add the following configuration above the `#### Canary/Baseline` comment:
+
+```yaml
+# Core Operations (Essential)
+fts_live_worker_newbank_initiate_transfer_replicas: 1
+fts_live_worker_newbank_check_transfer_status_replicas: 1
+
+# UPI Operations (Standard) 
+fts_live_worker_newbank_upi_initiate_transfer_replicas: 1
+fts_live_worker_newbank_upi_check_transfer_status_replicas: 1
+
+# IMPS Operations
+fts_live_worker_newbank_imps_initiate_transfer_replicas: 1
+fts_live_worker_newbank_imps_check_transfer_status_replicas: 1
+
+# NEFT Operations
+fts_live_worker_newbank_neft_initiate_transfer_replicas: 1
+fts_live_worker_newbank_neft_check_transfer_status_replicas: 1
+
+# RTGS Operations
+fts_live_worker_newbank_rtgs_initiate_transfer_replicas: 1
+fts_live_worker_newbank_rtgs_check_transfer_status_replicas: 1
+
+# Canary Deployments
+fts_live_worker_newbank_initiate_transfer_canary_replicas: 1
+fts_live_worker_newbank_check_transfer_status_canary_replicas: 1
+fts_live_worker_newbank_upi_initiate_transfer_canary_replicas: 1
+fts_live_worker_newbank_upi_check_transfer_status_canary_replicas: 1
+fts_live_worker_newbank_imps_initiate_transfer_canary_replicas: 1
+fts_live_worker_newbank_imps_check_transfer_status_canary_replicas: 1
+fts_live_worker_newbank_neft_initiate_transfer_canary_replicas: 1
+fts_live_worker_newbank_neft_check_transfer_status_canary_replicas: 1
+fts_live_worker_newbank_rtgs_initiate_transfer_canary_replicas: 1
+fts_live_worker_newbank_rtgs_check_transfer_status_canary_replicas: 1
+
+# Baseline Deployments
+fts_live_worker_newbank_initiate_transfer_baseline_replicas: 1
+fts_live_worker_newbank_check_transfer_status_baseline_replicas: 1
+fts_live_worker_newbank_upi_initiate_transfer_baseline_replicas: 1
+fts_live_worker_newbank_upi_check_transfer_status_baseline_replicas: 1
+fts_live_worker_newbank_imps_initiate_transfer_baseline_replicas: 1
+fts_live_worker_newbank_imps_check_transfer_status_baseline_replicas: 1
+fts_live_worker_newbank_neft_initiate_transfer_baseline_replicas: 1
+fts_live_worker_newbank_neft_check_transfer_status_baseline_replicas: 1
+fts_live_worker_newbank_rtgs_initiate_transfer_baseline_replicas: 1
+fts_live_worker_newbank_rtgs_check_transfer_status_baseline_replicas: 1
+
+# Direct Integration (if bank provides direct APIs)
+fts_live_worker_newbank_direct_upi_initiate_transfer_replicas: 1
+fts_live_worker_newbank_direct_upi_check_transfer_status_replicas: 1
+fts_live_worker_newbank_direct_imps_initiate_transfer_replicas: 1
+fts_live_worker_newbank_direct_imps_check_transfer_status_replicas: 1
+fts_live_worker_newbank_direct_neft_initiate_transfer_replicas: 1
+fts_live_worker_newbank_direct_neft_check_transfer_status_replicas: 1
+fts_live_worker_newbank_direct_rtgs_initiate_transfer_replicas: 1
+fts_live_worker_newbank_direct_rtgs_check_transfer_status_replicas: 1
+```
+
+## Key Points:
+
+1. **Location**: Add the new bank worker configurations above the `#### Canary/Baseline` comment
+2. **Placeholder**: Replace `newbank` with the actual bank name in lowercase
+3. **Replica Count**: All workers default to 1 replica
+4. **Worker Types**: Core operations, UPI, IMPS, NEFT, RTGS, Canary, Baseline, and Direct integration
+5. **Naming Convention**: Follow the pattern `fts_live_worker_{bankname}_{operation}_replicas`
+
+## Template Replacement:
+- `newbank` → actual bank name (lowercase)
+- Example: For Bank of Maharashtra → `bom`
+
+This configuration ensures the new bank has appropriate worker instances across all payment channels and deployment environments.

@@ -1,0 +1,127 @@
+# SWE Agent Task Execution Worker - extends shared backend base
+
+# For faster local builds, uncomment the line below and comment out the full build section
+# Note: Run 'make build-base-backend' first to build the base image
+# FROM razorpay/swe-agent-base-backend:dev
+
+# Full build steps (comment this section if using base image above)
+FROM harbor.razorpay.com/razorpay/rzp-docker-image-inventory-multi-arch:rzp-golden-image-base-python-3.13-alpine3.22
+
+WORKDIR /app
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+
+# Install all system dependencies (shared by API and Worker)
+RUN apk update && apk add --no-cache \
+    cmake \
+    make \
+    gcc \
+    g++ \
+    curl \
+    curl-dev \
+    ca-certificates \
+    git \
+    musl-dev \
+    nodejs \
+    npm \
+    bash \
+    github-cli \
+    go \
+    golangci-lint
+
+# Install uv for faster Python dependency installs
+# Note: --insecure flag is needed due to corporate SSL/TLS interception (MITM proxy)
+# that re-signs certificates with Razorpay's CA, which isn't in Alpine's trust store
+RUN curl -LsSf --insecure https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:${PATH}"
+
+# Accept GITHUB_TOKEN as build argument for private repo access
+ARG GITHUB_TOKEN
+ENV GITHUB_TOKEN=${GITHUB_TOKEN}
+
+# Install Python packages via uv with authentication for private repos
+# The GITHUB_TOKEN allows HTTPS access to razorpay/ai-pr-reviewer private repo
+RUN --mount=type=secret,id=github_token,required=false \
+    if [ -f /run/secrets/github_token ]; then \
+        export GITHUB_TOKEN=$(cat /run/secrets/github_token); \
+    fi && \
+    if [ -n "$GITHUB_TOKEN" ]; then \
+        sed "s|https://github.com/razorpay/ai-pr-reviewer|https://${GITHUB_TOKEN}@github.com/razorpay/ai-pr-reviewer|g" requirements.txt > /tmp/requirements_auth.txt && \
+        uv pip install --system -r /tmp/requirements_auth.txt && \
+        rm /tmp/requirements_auth.txt; \
+    else \
+        echo "WARNING: GITHUB_TOKEN not provided, installing without private repo authentication" && \
+        uv pip install --system -r requirements.txt || true; \
+    fi
+
+# Unset GITHUB_TOKEN for security
+ENV GITHUB_TOKEN=
+
+# Configure npm to bypass SSL verification (needed due to corporate proxy)
+RUN npm config set strict-ssl false
+
+# Install Claude Code and Google Workspace CLI globally via npm
+RUN npm install -g @anthropic-ai/claude-code @googleworkspace/cli
+
+RUN mkdir -p /root/.claude
+COPY src/agents/terminal_agents/claude-code-settings.json /root/.claude/settings.json
+
+# Create Claude wrapper script to fix BusyBox env compatibility
+RUN mv /usr/local/bin/claude /usr/local/bin/claude-original && \
+    echo '#!/bin/bash' > /usr/local/bin/claude && \
+    echo 'export SHELL=/bin/bash' >> /usr/local/bin/claude && \
+    echo 'exec node --no-warnings --enable-source-maps /usr/local/bin/claude-original "$@"' >> /usr/local/bin/claude && \
+    chmod +x /usr/local/bin/claude
+
+# Copy installation script
+COPY build/docker/scripts/install-devstackctl.sh /tmp/install-devstackctl.sh
+
+# Install devstackctl CLI for Razorpay infrastructure operations
+RUN --mount=type=secret,id=github_token,required=false \
+    chmod +x /tmp/install-devstackctl.sh && \
+    /tmp/install-devstackctl.sh && \
+    rm /tmp/install-devstackctl.sh
+
+# Add devstackctl to PATH
+ENV PATH="/root/.devstack/bin:${PATH}"
+
+# Install Google Cloud CLI
+RUN apk add --no-cache python3 py3-pip wget && \
+    ARCH=$(uname -m) && \
+    if [ "$ARCH" = "aarch64" ]; then GCLOUD_ARCH="arm"; else GCLOUD_ARCH="x86_64"; fi && \
+    (wget -q -O - https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-$GCLOUD_ARCH.tar.gz | tar -xz -C /opt || echo "Google Cloud CLI installation failed, continuing...") && \
+    if [ -d "/opt/google-cloud-sdk" ]; then \
+        ln -s /opt/google-cloud-sdk/bin/gcloud /usr/local/bin/gcloud && \
+        ln -s /opt/google-cloud-sdk/bin/gsutil /usr/local/bin/gsutil && \
+        ln -s /opt/google-cloud-sdk/bin/bq /usr/local/bin/bq && \
+        /opt/google-cloud-sdk/bin/gcloud config set core/disable_usage_reporting true; \
+    fi
+
+# Copy application code (shared by both services)
+COPY . .
+
+# Set common environment variables
+ENV SRC_DIR=app
+ENV LOG_DIR=app/tmp/logs
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV TZ=Asia/Kolkata
+ENV GOROOT=/usr/lib/go
+ENV GOPATH=/go
+ENV PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+ENV GOPROXY=direct
+ENV GOSUMDB=off
+
+# Create Go workspace directory
+RUN mkdir -p $GOPATH
+
+# Worker-specific configuration
+ENV APP_NAME=swe-agent-task-execution-worker
+
+# Expose the metrics port
+EXPOSE 8080
+
+# Worker-specific startup command
+CMD ["python", "commands/task_execution_worker.py"]

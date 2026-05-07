@@ -1,0 +1,62 @@
+{
+  "mcpServers": {
+    "sequentialthinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
+    },
+    "memory": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-memory"
+      ]
+    },
+    "blade-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@razorpay/blade-mcp@latest"
+      ]
+    },
+    "devrev-mcp": {
+      "command": "npx",
+      "args": [
+        "mcp-remote",
+        "https://api.devrev.ai/mcp/v1",
+        "--header",
+        "Authorization:${DEVREV_API_TOKEN}"
+      ],
+      "env": {
+        "DEVREV_API_TOKEN": "${DEVREV_API_TOKEN}"
+      }
+    },
+    "grafana": {
+      "type": "sse",
+      "url": "https://grafana-mcp.razorpay.com/sse"
+    },
+    "coralogix-server": {
+      "type": "http",
+      "url": "https://api.coralogix.in/mgmt/api/v1/mcp",
+      "headers": {
+        "Authorization": "${CORALOGIX_API_KEY}"
+      }
+    },
+    "slack": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "slack-mcp-server@latest",
+        "--transport",
+        "stdio"
+      ],
+      "env": {
+        "SLACK_TEAM_ID": "T0276T56F",
+        "SLACK_MCP_XOXP_TOKEN": "${SLACK_MCP_XOXP_TOKEN}",
+        "SLACK_MCP_ADD_MESSAGE_TOOL": "C08DS8AE7T8"
+      }
+    }
+  }
+}

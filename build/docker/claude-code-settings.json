@@ -1,0 +1,46 @@
+{
+    "sandbox": {
+      "enabled": true,
+      "autoAllowBashIfSandboxed": true,
+      "excludedCommands": ["docker", "docker-compose"],
+      "allowUnsandboxedCommands": false
+    },
+    "permissions": {
+      "allow": [
+        "Read(/app/**)",
+        "Write(/app/**)",
+        "Read(/tmp/**)",
+        "Write(/tmp/**)"
+      ],
+      "deny": [
+        "Read(/etc/**)",
+        "Write(/etc/**)",
+        "Read(/bin/**)",
+        "Write(/bin/**)",
+        "Read(/sbin/**)",
+        "Write(/sbin/**)",
+        "Read(/usr/bin/**)",
+        "Write(/usr/bin/**)",
+        "Read(/usr/sbin/**)",
+        "Write(/usr/sbin/**)",
+        "Read(/System/**)",
+        "Write(/System/**)",
+        "Read(/root/.ssh/**)",
+        "Write(/root/.ssh/**)",
+        "Read(/root/.aws/**)",
+        "Write(/root/.aws/**)",
+        "Read(/root/.config/gcloud/application_default_credentials.json)",
+        "Write(/root/.config/gcloud/application_default_credentials.json)",
+        "Read(**/.env)",
+        "Write(**/.env)",
+        "Read(**/credentials.json)",
+        "Write(**/credentials.json)",
+        "Read(**/.credentials)",
+        "Write(**/.credentials)",
+        "Read(/root/.bashrc)",
+        "Write(/root/.bashrc)",
+        "Read(/root/.claude/settings.json)",
+        "Write(/root/.claude/settings.json)"
+      ]
+    }
+  }

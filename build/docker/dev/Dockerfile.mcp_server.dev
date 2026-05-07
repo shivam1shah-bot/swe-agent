@@ -1,0 +1,73 @@
+# SWE Agent MCP Service - extends shared backend base
+
+# For faster local builds, uncomment the line below and comment out the full build section
+# Note: Run 'make build-base-backend' first to build the base image
+# FROM razorpay/swe-agent-base-backend:dev
+
+# Full build steps (comment this section if using base image above)
+FROM harbor.razorpay.com/razorpay/rzp-docker-image-inventory-multi-arch:rzp-golden-image-base-python-3.13-alpine3.22
+
+WORKDIR /app
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+
+# Install all system dependencies (shared by API and Worker)
+RUN apk update && apk add --no-cache \
+    cmake \
+    make \
+    gcc \
+    g++ \
+    curl \
+    curl-dev \
+    ca-certificates \
+    git \
+    musl-dev \
+    nodejs \
+    npm \
+    bash \
+    github-cli
+
+# Install uv for faster Python dependency installs
+# Note: --insecure flag is needed due to corporate SSL/TLS interception (MITM proxy)
+# that re-signs certificates with Razorpay's CA, which isn't in Alpine's trust store
+RUN curl -LsSf --insecure https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:${PATH}"
+
+# Accept GITHUB_TOKEN as build argument for private repo access
+ARG GITHUB_TOKEN
+
+# Install Python packages via uv with authentication for private repos
+# The GITHUB_TOKEN allows HTTPS access to razorpay/ai-pr-reviewer private repo
+RUN if [ -n "$GITHUB_TOKEN" ]; then \
+        echo "Installing with GITHUB_TOKEN authentication..." && \
+        sed "s|https://github.com/razorpay/ai-pr-reviewer|https://x-access-token:${GITHUB_TOKEN}@github.com/razorpay/ai-pr-reviewer|g" requirements.txt > /tmp/requirements_auth.txt && \
+        uv pip install --system -r /tmp/requirements_auth.txt && \
+        rm /tmp/requirements_auth.txt; \
+    else \
+        echo "WARNING: GITHUB_TOKEN not provided, installing without private repo authentication" && \
+        uv pip install --system -r requirements.txt || true; \
+    fi
+
+# Copy application code (shared by both services)
+COPY . .
+
+# Set common environment variables
+ENV SRC_DIR=app
+ENV LOG_DIR=app/tmp/logs
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV TZ=Asia/Kolkata
+
+# MCP-specific configuration
+ENV APP_NAME=swe-agent-mcp-server
+
+# Expose the MCP service port
+EXPOSE 8003
+
+# Expose the metrics port
+EXPOSE 8080
+
+# MCP-specific startup command with reload for development
+CMD ["python", "commands/mcp_server.py"] 

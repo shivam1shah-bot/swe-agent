@@ -1,0 +1,107 @@
+Here are the exact code modifications for integrating TESTBANK into the payouts service:
+
+**FILE: payouts/internal/app/common/appConstants/constants.go**
+```go
+	TESTBANK         = "testbank"
+```
+
+**FILE: payouts/internal/app/common/appConstants/accounts.go**  
+```go
+	"1234": BankIdentifier[TESTBANK],
+	"5678": BankIdentifier[TESTBANK],
+	"9012": BankIdentifier[TESTBANK],
+```
+
+```go
+	TESTBANK: "TEST0000001",
+```
+
+**FILE: payouts/internal/app/fundAccountCache/model_test.go**
+```go
+		{
+			name:        "check if it is a razorpayX virtual account for TESTBANK",
+			fundAccount: getFundAccountModel(),
+			asserts: func(fundAccount *fa.FundAccount) {
+				fundAccount.BankAccount.AccountNumber = "123456"
+				flag, err := fundAccount.IsRazorpayVirtualBankAccount()
+				assert.Equal(t, false, flag)
+				assert.Equal(t, nil, err)
+
+				fundAccount.BankAccount.AccountNumber = "1234123456789012"
+				fundAccount.BankAccount.Ifsc = appConstants.BankIdentifier[appConstants.TESTBANK]
+				fundAccount.BankAccount.BankIdentifier = appConstants.BankIdentifier[appConstants.TESTBANK]
+				flag, err = fundAccount.IsRazorpayVirtualBankAccount()
+				assert.Equal(t, true, flag)
+				assert.Equal(t, nil, err)
+			},
+		},
+```
+
+**FILE: payouts/internal/app/payouts/mode.go**
+```go
+			appConstants.TESTBANK,
+```
+
+```go
+		appConstants.TESTBANK: {
+			appConstants.BANK_ACCOUNT: {
+				appConstants.RTGS,
+				appConstants.IMPS,
+				appConstants.NEFT,
+				appConstants.IFT,
+			},
+			appConstants.CARD: {
+				appConstants.IMPS,
+				appConstants.NEFT,
+			},
+			appConstants.VPA: {
+				appConstants.UPI,
+			},
+		},
+```
+
+```go
+			appConstants.TESTBANK: {
+				appConstants.BANK_ACCOUNT: {
+					appConstants.RTGS,
+					appConstants.IMPS,
+					appConstants.NEFT,
+					appConstants.IFT,
+				},
+				appConstants.CARD: {
+					appConstants.IMPS,
+					appConstants.NEFT,
+					appConstants.UPI,
+				},
+				appConstants.VPA: {
+					appConstants.UPI,
+				},
+			},
+```
+
+**FILE: payouts/internal/app/payouts/mode_test.go**
+```go
+	err = payouts.ValidateChannelAndModeForPayouts(appConstants.TESTBANK, appConstants.BANK_ACCOUNT, appConstants.IMPS, payouts.Direct, appConstants.CountryCodeIndia)
+	assert.Nil(t, err)
+
+	err = payouts.ValidateChannelAndModeForPayouts(appConstants.TESTBANK, appConstants.BANK_ACCOUNT, appConstants.NEFT, payouts.Direct, appConstants.CountryCodeIndia)
+	assert.Nil(t, err)
+
+	err = payouts.ValidateChannelAndModeForPayouts(appConstants.TESTBANK, appConstants.BANK_ACCOUNT, appConstants.RTGS, payouts.Direct, appConstants.CountryCodeIndia)
+	assert.Nil(t, err)
+
+	err = payouts.ValidateChannelAndModeForPayouts(appConstants.TESTBANK, appConstants.BANK_ACCOUNT, appConstants.IFT, payouts.Direct, appConstants.CountryCodeIndia)
+	assert.Nil(t, err)
+
+	err = payouts.ValidateChannelAndModeForPayouts(appConstants.TESTBANK, appConstants.CARD, appConstants.IMPS, payouts.Direct, appConstants.CountryCodeIndia)
+	assert.Nil(t, err)
+
+	err = payouts.ValidateChannelAndModeForPayouts(appConstants.TESTBANK, appConstants.CARD, appConstants.NEFT, payouts.Direct, appConstants.CountryCodeIndia)
+	assert.Nil(t, err)
+
+	err = payouts.ValidateChannelAndModeForPayouts(appConstants.TESTBANK, appConstants.CARD, appConstants.UPI, payouts.Direct, appConstants.CountryCodeIndia)
+	assert.Nil(t, err)
+
+	err = payouts.ValidateChannelAndModeForPayouts(appConstants.TESTBANK, appConstants.VPA, appConstants.UPI, payouts.Direct, appConstants.CountryCodeIndia)
+	assert.Nil(t, err)
+```

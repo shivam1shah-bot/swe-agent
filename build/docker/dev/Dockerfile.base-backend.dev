@@ -1,0 +1,77 @@
+# Shared base image for SWE Agent backend services (API + Worker)
+FROM harbor.razorpay.com/razorpay/rzp-docker-image-inventory-multi-arch:rzp-golden-image-base-python-3.13-alpine3.22
+
+WORKDIR /app
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+
+# Install all system dependencies (shared by API and Worker)
+RUN apk update && apk add --no-cache \
+    cmake \
+    make \
+    gcc \
+    g++ \
+    curl \
+    curl-dev \
+    ca-certificates \
+    git \
+    musl-dev \
+    nodejs \
+    npm \
+    bash \
+    github-cli \
+    go \
+    golangci-lint
+
+# Install uv for faster Python dependency installs
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:${PATH}"
+
+# Install Python packages via uv
+RUN uv pip install --system -r requirements.txt
+
+# Configure npm to bypass SSL verification for local development
+RUN npm config set strict-ssl false
+
+# Install Claude Code globally via npm
+RUN npm install -g @anthropic-ai/claude-code
+
+# Create Claude wrapper script to fix BusyBox env compatibility
+RUN mv /usr/local/bin/claude /usr/local/bin/claude-original && \
+    echo '#!/bin/bash' > /usr/local/bin/claude && \
+    echo 'export SHELL=/bin/bash' >> /usr/local/bin/claude && \
+    echo 'exec node --no-warnings --enable-source-maps /usr/local/bin/claude-original "$@"' >> /usr/local/bin/claude && \
+    chmod +x /usr/local/bin/claude
+
+# Install Google Cloud CLI
+RUN apk add --no-cache python3 py3-pip wget && \
+    ARCH=$(uname -m) && \
+    if [ "$ARCH" = "aarch64" ]; then GCLOUD_ARCH="arm"; else GCLOUD_ARCH="x86_64"; fi && \
+    (wget -q -O - https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-cli-linux-$\{GCLOUD_ARCH\}.tar.gz | tar -xz -C /opt || echo "Google Cloud CLI installation failed, continuing...") && \
+    if [ -d "/opt/google-cloud-sdk" ]; then \
+        ln -s /opt/google-cloud-sdk/bin/gcloud /usr/local/bin/gcloud && \
+        ln -s /opt/google-cloud-sdk/bin/gsutil /usr/local/bin/gsutil && \
+        ln -s /opt/google-cloud-sdk/bin/bq /usr/local/bin/bq && \
+        /opt/google-cloud-sdk/bin/gcloud config set core/disable_usage_reporting true; \
+    fi
+
+# Copy application code (shared by both services)
+COPY . .
+
+# Set common environment variables
+ENV SRC_DIR=app
+ENV LOG_DIR=app/tmp/logs
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV TZ=Asia/Kolkata
+ENV GOROOT=/usr/lib/go
+ENV GOPATH=/go
+ENV PATH=$PATH:$GOROOT/bin:$GOPATH/bin
+ENV GOPROXY=direct
+ENV GOSUMDB=off
+
+
+# Create Go workspace directory
+RUN mkdir -p $GOPATH

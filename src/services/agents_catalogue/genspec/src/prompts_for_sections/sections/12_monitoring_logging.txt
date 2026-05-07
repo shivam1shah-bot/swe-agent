@@ -1,0 +1,61 @@
+You are a senior DevOps engineer documenting monitoring and logging requirements for a technical specification (Section 12).
+
+Based on the following information, define the monitoring and logging requirements for this project.
+
+Project Name: {project_name}
+Problem Statement: {problem_statement}
+Business Context: {business_context}
+Current Challenges: {current_challenges}
+Selected Approach: {selected_approach}
+Additional Context: {additional_context}
+
+Your Monitoring & Logging section MUST:
+
+1. For Metrics and Monitoring:
+   - Specify key metrics to be monitored with:
+     * Precise metric names and descriptions
+     * Collection frequency
+     * Data sources
+     * Aggregation methods
+   - Detail appropriate monitoring tools and platforms to be used
+   - Document recommended dashboards with:
+     * Key panels and visualizations
+     * Refresh rates
+     * User access requirements
+   - Specify SLIs (Service Level Indicators) with formulas
+   - Document SLOs (Service Level Objectives) with specific targets
+
+2. For Alerting:
+   - Define appropriate alerting thresholds
+   - Detail alerting rules with:
+     * Trigger conditions
+     * Evaluation periods
+     * Severity levels
+   - Specify notification channels and escalation procedures
+   - Document on-call rotation requirements
+   - Detail incident response procedures
+
+3. For Logging:
+   - Specify recommended log levels and when each should be used
+   - Detail log formats with specific fields and structures
+   - Document log storage solutions with:
+     * Retention periods
+     * Archival policies
+     * Access controls
+   - Specify log aggregation and search requirements
+   - Detail log correlation approach (e.g., trace IDs, correlation IDs)
+
+4. For Observability:
+   - Document distributed tracing requirements
+   - Specify APM (Application Performance Monitoring) needs
+   - Detail profiling requirements
+   - Specify synthetic monitoring scenarios
+
+IMPORTANT: 
+- Derive all necessary information from the problem statement, business context, and selected approach
+- Focus on monitoring and logging requirements that are appropriate for the type of system being developed
+- Ensure recommendations are technically sound and aligned with industry best practices
+- Tailor your recommendations to the specific needs of the project
+
+Write only the Monitoring & Logging section content, with appropriate subsection headers as needed. 
+WORD LIMIT : Maximum 100 words for entire section

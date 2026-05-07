@@ -1,0 +1,128 @@
+PAYOUTS MODE REFERENCE - internal/app/payouts/mode.go
+
+REQUIRED MODIFICATIONS FOR BANK INTEGRATION:
+
+FILE: payouts/internal/app/payouts/mode.go
+
+1. ADD BANK TO allSupportedChannels:
+   LOCATION: var allSupportedChannels = map[string][]string{
+   PATTERN: Add bank constant to India country slice (following RBL pattern)
+   
+   REFERENCE PATTERN:
+   ```go
+   allSupportedChannels = map[string][]string{
+       appConstants.CountryCodeIndia: {
+           appConstants.YESBANK,
+           appConstants.RBL,           // <-- REFERENCE PATTERN
+           appConstants.ICICI,
+           appConstants.CITI,
+           appConstants.M2P,
+           appConstants.RZPX,
+           appConstants.NEWBANK,       // <-- ADD NEW BANK HERE
+       },
+   }
+   ```
+
+2. ADD BANK TO GetAllSupportedPayoutChannelsWithModes FUNCTION:
+   LOCATION: return map[string]map[string][]string{
+   PATTERN: Add complete bank entry with supported account types and modes (following RBL pattern)
+   
+   REFERENCE PATTERN (RBL):
+   ```go
+   appConstants.RBL: {                    // <-- REFERENCE PATTERN
+       appConstants.BANK_ACCOUNT: {
+           appConstants.RTGS,
+           appConstants.IMPS,
+           appConstants.NEFT,
+           appConstants.IFT,
+       },
+       appConstants.CARD: {
+           appConstants.IMPS,
+           appConstants.NEFT,
+       },
+       appConstants.WALLET: {
+           appConstants.AMAZONPAY,
+       },
+       appConstants.VPA: {
+           appConstants.UPI,
+       },
+   },
+   ```
+
+   EXAMPLE NEW BANK ENTRY:
+   ```go
+   appConstants.NEWBANK: {                // <-- ADD NEW BANK
+       appConstants.BANK_ACCOUNT: {
+           appConstants.RTGS,
+           appConstants.IMPS,
+           appConstants.NEFT,
+           appConstants.IFT,
+       },
+       appConstants.CARD: {
+           appConstants.IMPS,
+           appConstants.NEFT,
+       },
+       appConstants.VPA: {
+           appConstants.UPI,
+       },
+   },
+   ```
+
+3. ADD BANK TO GetAllSupportedPayoutChannelsWithModesWithAccountType FUNCTION:
+   LOCATION: return map[string]map[string]map[string][]string{ under Direct section
+   PATTERN: Add bank entry under Direct account type (following RBL pattern)
+   
+   REFERENCE PATTERN (RBL under Direct):
+   ```go
+   Direct: {
+       appConstants.ICICI: { ... },
+       appConstants.RBL: {                     // <-- REFERENCE PATTERN
+           appConstants.BANK_ACCOUNT: {
+               appConstants.RTGS,
+               appConstants.IMPS,
+               appConstants.NEFT,
+               appConstants.IFT,
+           },
+           appConstants.CARD: {
+               appConstants.IMPS,
+               appConstants.NEFT,
+               appConstants.UPI,
+           },
+           appConstants.VPA: {
+               appConstants.UPI,
+           },
+       },
+       appConstants.YESBANK: { ... },
+       appConstants.NEWBANK: {                 // <-- ADD NEW BANK
+           appConstants.BANK_ACCOUNT: {
+               appConstants.RTGS,
+               appConstants.IMPS,
+               appConstants.NEFT,
+               appConstants.IFT,
+           },
+           appConstants.CARD: {
+               appConstants.IMPS,
+               appConstants.NEFT,
+               appConstants.UPI,
+           },
+           appConstants.VPA: {
+               appConstants.UPI,
+           },
+       },
+   }
+   ```
+
+CRITICAL REQUIREMENTS:
+- Use appConstants.{BANKNAME} format for bank constants
+- Follow exact mode and account type combinations as RBL
+- Add bank to both Shared and Direct account type sections
+- Maintain proper map structure and formatting
+- Support standard payment modes: RTGS, IMPS, NEFT, IFT, UPI
+- Support account types: BANK_ACCOUNT, CARD, VPA, WALLET
+
+PURPOSE:
+These modifications enable:
+- Channel validation for payouts
+- Mode validation per account type  
+- Proper routing configuration for payout processing
+- Support for all standard payout methods

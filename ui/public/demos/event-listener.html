@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vyom Event Listener Demo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #0F172A;
+    color: #E2E8F0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  .demo-container {
+    width: 900px;
+    height: 560px;
+    border-radius: 16px;
+    border: 1px solid rgba(51,65,85,0.6);
+    background: rgba(15,23,42,0.7);
+    backdrop-filter: blur(12px);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+  }
+
+  .window-chrome {
+    height: 40px;
+    background: rgba(30,41,59,0.8);
+    border-bottom: 1px solid rgba(51,65,85,0.6);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 8px;
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-red { background: #EF4444; }
+  .dot-yellow { background: #EAB308; }
+  .dot-green { background: #22C55E; }
+
+  /* DevRev-style dark theme */
+  .devrev-layout {
+    display: flex;
+    height: calc(100% - 40px);
+  }
+
+  /* Left: DevRev ticket panel */
+  .ticket-panel {
+    width: 420px;
+    border-right: 1px solid rgba(51,65,85,0.6);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .ticket-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid rgba(51,65,85,0.4);
+  }
+  .ticket-id-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .ticket-id {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: #60A5FA;
+    background: rgba(96,165,250,0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(96,165,250,0.2);
+  }
+  .ticket-type {
+    font-size: 11px;
+    color: #94A3B8;
+    background: rgba(148,163,184,0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .ticket-part {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #94A3B8;
+  }
+  .part-badge {
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+  .part-vyom {
+    background: rgba(59,130,246,0.15);
+    color: #60A5FA;
+    border: 1px solid rgba(59,130,246,0.25);
+  }
+  .ticket-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #F1F5F9;
+    margin-top: 6px;
+  }
+  .ticket-desc {
+    font-size: 12px;
+    color: #94A3B8;
+    margin-top: 4px;
+  }
+  .ticket-repo {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: #94A3B8;
+    margin-top: 4px;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid rgba(51,65,85,0.4);
+    padding: 0 18px;
+  }
+  .tab {
+    padding: 8px 14px;
+    font-size: 12px;
+    color: #64748B;
+    cursor: default;
+    border-bottom: 2px solid transparent;
+    transition: all 0.3s;
+  }
+  .tab.active {
+    color: #E2E8F0;
+    border-bottom-color: #3B82F6;
+    font-weight: 600;
+  }
+
+  /* Events timeline */
+  .events-area {
+    flex: 1;
+    overflow: hidden;
+    padding: 12px 18px;
+  }
+  .today-divider {
+    text-align: center;
+    font-size: 11px;
+    color: #475569;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .today-divider::before, .today-divider::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 35%;
+    height: 1px;
+    background: rgba(71,85,105,0.3);
+  }
+  .today-divider::before { left: 0; }
+  .today-divider::after { right: 0; }
+
+  .event-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 5px 0;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: all 0.4s ease;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  .event-item.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .event-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .icon-created { background: rgba(239,68,68,0.15); color: #EF4444; }
+  .icon-system { background: rgba(96,165,250,0.12); color: #60A5FA; }
+  .icon-github { background: rgba(148,163,184,0.12); color: #94A3B8; }
+  .icon-vyom { background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(6,182,212,0.2)); color: #60A5FA; }
+  .icon-link { background: rgba(34,197,94,0.12); color: #22C55E; }
+
+  .event-text { color: #CBD5E1; }
+  .event-text strong { color: #F1F5F9; font-weight: 600; }
+  .event-text a { color: #60A5FA; text-decoration: none; }
+  .event-text .bot { color: #A78BFA; font-weight: 600; }
+  .event-text code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    background: rgba(255,255,255,0.06);
+    padding: 1px 4px;
+    border-radius: 3px;
+    color: #E2E8F0;
+  }
+  .event-time {
+    color: #475569;
+    font-size: 10px;
+    margin-left: 4px;
+    white-space: nowrap;
+  }
+
+  /* Right: Flow diagram */
+  .flow-panel {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: rgba(15,23,42,0.3);
+  }
+
+  .flow-title {
+    position: absolute;
+    top: 14px;
+    left: 18px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #475569;
+  }
+
+  /* Flow nodes */
+  .flow-node {
+    position: absolute;
+    border-radius: 12px;
+    padding: 10px 14px;
+    text-align: center;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 5;
+  }
+  .flow-node.visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .flow-node-icon { font-size: 22px; margin-bottom: 4px; }
+  .flow-node-label { font-size: 10px; font-weight: 700; color: #E2E8F0; white-space: nowrap; }
+  .flow-node-sub { font-size: 8px; color: #64748B; margin-top: 2px; }
+
+  .node-devrev {
+    background: rgba(96,165,250,0.08);
+    border: 1px solid rgba(96,165,250,0.2);
+    left: 50%;
+    top: 40px;
+    transform-origin: center;
+  }
+  .node-devrev.visible { transform: scale(1) translateX(-50%); }
+  .node-devrev { transform: scale(0.8) translateX(-50%); }
+
+  .node-vyom {
+    background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(6,182,212,0.12));
+    border: 1.5px solid rgba(59,130,246,0.35);
+    left: 50%;
+    top: 170px;
+    box-shadow: 0 0 30px rgba(59,130,246,0.1);
+  }
+  .node-vyom.visible { transform: scale(1) translateX(-50%); }
+  .node-vyom { transform: scale(0.8) translateX(-50%); }
+
+  .node-repo {
+    background: rgba(148,163,184,0.06);
+    border: 1px solid rgba(148,163,184,0.15);
+  }
+  .node-repo1 { left: 30px; top: 320px; }
+  .node-repo2 { left: 145px; top: 320px; }
+  .node-repo3 { left: 260px; top: 320px; }
+  .node-repo4 { left: 375px; top: 320px; }
+
+  .node-result {
+    background: rgba(34,197,94,0.08);
+    border: 1px solid rgba(34,197,94,0.2);
+    left: 50%;
+    top: 430px;
+  }
+  .node-result.visible { transform: scale(1) translateX(-50%); }
+  .node-result { transform: scale(0.8) translateX(-50%); }
+
+  /* Flow SVG arrows */
+  .flow-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .flow-arrow {
+    stroke: rgba(59,130,246,0.15);
+    stroke-width: 1.5;
+    fill: none;
+    marker-end: url(#arrowhead);
+  }
+  .flow-arrow-active {
+    stroke-width: 2;
+    fill: none;
+    stroke-dasharray: 6 8;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  .flow-arrow-active.visible { opacity: 0.6; }
+  .flow-arrow-active.a1 { stroke: #60A5FA; }
+  .flow-arrow-active.a2 { stroke: #06B6D4; }
+  .flow-arrow-active.a3 { stroke: #94A3B8; }
+  .flow-arrow-active.a4 { stroke: #22C55E; }
+
+  /* Animated data packet */
+  .flow-packet {
+    r: 3;
+    opacity: 0;
+  }
+
+  /* Step labels */
+  .step-label {
+    position: absolute;
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    z-index: 6;
+    opacity: 0;
+    transition: opacity 0.4s;
+    white-space: nowrap;
+  }
+  .step-label.visible { opacity: 1; }
+  .step-1 {
+    color: #60A5FA;
+    background: rgba(96,165,250,0.1);
+    top: 125px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .step-2 {
+    color: #06B6D4;
+    background: rgba(6,182,212,0.1);
+    top: 270px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  .step-3 {
+    color: #22C55E;
+    background: rgba(34,197,94,0.1);
+    top: 400px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* Replay */
+  .replay-btn {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(59,130,246,0.12);
+    border: 1px solid rgba(59,130,246,0.25);
+    color: #60A5FA;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    z-index: 100;
+    opacity: 0;
+    transition: all 0.3s;
+    font-family: 'Inter', sans-serif;
+  }
+  .replay-btn.visible { opacity: 1; }
+
+  /* Pulse on vyom node */
+  @keyframes vyomPulse {
+    0%, 100% { box-shadow: 0 0 30px rgba(59,130,246,0.1); }
+    50% { box-shadow: 0 0 40px rgba(59,130,246,0.25); }
+  }
+  .node-vyom.active-pulse {
+    animation: vyomPulse 1.5s ease infinite;
+  }
+
+  /* Animated arrows */
+  @keyframes dashMove {
+    to { stroke-dashoffset: -14; }
+  }
+  .flow-arrow-active.visible {
+    animation: dashMove 1s linear infinite;
+  }
+</style>
+</head>
+<body>
+
+<div class="demo-container">
+  <div class="window-chrome">
+    <div class="dot dot-red"></div>
+    <div class="dot dot-yellow"></div>
+    <div class="dot dot-green"></div>
+  </div>
+
+  <div class="devrev-layout">
+    <!-- Left: DevRev Ticket -->
+    <div class="ticket-panel">
+      <div class="ticket-header">
+        <div class="ticket-id-row">
+          <span class="ticket-id">ISS-1654165</span>
+          <span class="ticket-type">Task</span>
+          <span class="ticket-part">Part: <span class="part-badge part-vyom">⚡ Vyom</span></span>
+        </div>
+        <div class="ticket-repo">razorpay/discover</div>
+        <div class="ticket-title">Run go/no-go readiness for discover</div>
+        <div class="ticket-desc">Pre-launch readiness checks across kube-manifests, alert-rules, and service config</div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab">Internal discussions</div>
+        <div class="tab active">Events</div>
+      </div>
+
+      <div class="events-area">
+        <div class="today-divider">Today</div>
+
+        <div class="event-item" id="ev1">
+          <div class="event-icon icon-created">RG</div>
+          <div><span class="event-text">Created <a href="#">ISS-1654165</a></span><span class="event-time">10:10 AM</span></div>
+        </div>
+
+        <div class="event-item" id="ev2">
+          <div class="event-icon icon-system">📋</div>
+          <div><span class="event-text">Updated sla to <strong>Ola Policy V18</strong></span><span class="event-time">10:10 AM</span></div>
+        </div>
+
+        <div class="event-item" id="ev3">
+          <div class="event-icon icon-vyom">⚡</div>
+          <div><span class="event-text"><span class="bot">Vyom</span> picked up ticket automatically</span><span class="event-time">10:12 AM</span></div>
+        </div>
+
+        <div class="event-item" id="ev4">
+          <div class="event-icon icon-github">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          </div>
+          <div><span class="event-text"><span class="bot">rzp-vyom[bot]</span> opened draft PR <a href="#">kube-manifests/24168</a></span><span class="event-time">10:28 AM</span></div>
+        </div>
+
+        <div class="event-item" id="ev5">
+          <div class="event-icon icon-link">🔗</div>
+          <div><span class="event-text">Created link dependent on <code>code_change-171481</code></span><span class="event-time">10:28 AM</span></div>
+        </div>
+
+        <div class="event-item" id="ev6">
+          <div class="event-icon icon-github">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          </div>
+          <div><span class="event-text"><span class="bot">rzp-vyom[bot]</span> opened draft PR <a href="#">alert-rules/18773</a></span><span class="event-time">10:29 AM</span></div>
+        </div>
+
+        <div class="event-item" id="ev7">
+          <div class="event-icon icon-link">🔗</div>
+          <div><span class="event-text">Created link <code>C-CODECHANGE-14864</code></span><span class="event-time">10:29 AM</span></div>
+        </div>
+
+        <div class="event-item" id="ev8">
+          <div class="event-icon icon-github">
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          </div>
+          <div><span class="event-text"><span class="bot">rzp-vyom[bot]</span> opened draft PR <a href="#">discover/40</a></span><span class="event-time">10:30 AM</span></div>
+        </div>
+
+        <div class="event-item" id="ev9">
+          <div class="event-icon icon-vyom">⚡</div>
+          <div><span class="event-text"><span class="bot">Vyom</span> completed — <strong>3 PRs</strong> across <strong>3 repos</strong>, 28 files modified</span><span class="event-time">10:31 AM</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right: Flow diagram -->
+    <div class="flow-panel">
+      <div class="flow-title">Event Flow</div>
+
+      <svg class="flow-svg" viewBox="0 0 480 520">
+        <defs>
+          <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <path d="M0,0 L8,3 L0,6" fill="rgba(59,130,246,0.3)" />
+          </marker>
+          <marker id="arrowgreen" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <path d="M0,0 L8,3 L0,6" fill="rgba(34,197,94,0.4)" />
+          </marker>
+        </defs>
+
+        <!-- DevRev → Vyom -->
+        <line class="flow-arrow" x1="240" y1="90" x2="240" y2="170" marker-end="url(#arrowhead)" />
+        <line class="flow-arrow-active a1" id="arrow1" x1="240" y1="90" x2="240" y2="170" stroke-dasharray="6 8" />
+
+        <!-- Vyom → repos (fan out) -->
+        <line class="flow-arrow" x1="195" y1="235" x2="68" y2="320" />
+        <line class="flow-arrow" x1="220" y1="235" x2="180" y2="320" />
+        <line class="flow-arrow" x1="260" y1="235" x2="300" y2="320" />
+        <line class="flow-arrow" x1="285" y1="235" x2="413" y2="320" />
+        <line class="flow-arrow-active a2" id="arrow2a" x1="195" y1="235" x2="68" y2="320" stroke-dasharray="6 8" />
+        <line class="flow-arrow-active a2" id="arrow2b" x1="220" y1="235" x2="180" y2="320" stroke-dasharray="6 8" />
+        <line class="flow-arrow-active a2" id="arrow2c" x1="260" y1="235" x2="300" y2="320" stroke-dasharray="6 8" />
+        <line class="flow-arrow-active a2" id="arrow2d" x1="285" y1="235" x2="413" y2="320" stroke-dasharray="6 8" />
+
+        <!-- Repos → Result -->
+        <line class="flow-arrow" x1="68" y1="380" x2="215" y2="442" marker-end="url(#arrowgreen)" />
+        <line class="flow-arrow" x1="180" y1="380" x2="225" y2="442" marker-end="url(#arrowgreen)" />
+        <line class="flow-arrow" x1="300" y1="380" x2="255" y2="442" marker-end="url(#arrowgreen)" />
+        <line class="flow-arrow" x1="413" y1="380" x2="265" y2="442" marker-end="url(#arrowgreen)" />
+        <line class="flow-arrow-active a4" id="arrow3a" x1="68" y1="380" x2="215" y2="442" stroke-dasharray="6 8" />
+        <line class="flow-arrow-active a4" id="arrow3b" x1="180" y1="380" x2="225" y2="442" stroke-dasharray="6 8" />
+        <line class="flow-arrow-active a4" id="arrow3c" x1="300" y1="380" x2="255" y2="442" stroke-dasharray="6 8" />
+        <line class="flow-arrow-active a4" id="arrow3d" x1="413" y1="380" x2="265" y2="442" stroke-dasharray="6 8" />
+      </svg>
+
+      <!-- Step labels -->
+      <div class="step-label step-1" id="step1">① Ticket Assigned → Auto Pickup</div>
+      <div class="step-label step-2" id="step2">② Agent Creates PRs</div>
+      <div class="step-label step-3" id="step3">③ Events Flow Back to DevRev</div>
+
+      <!-- Flow nodes -->
+      <div class="flow-node node-devrev" id="fn-devrev">
+        <div class="flow-node-icon">📋</div>
+        <div class="flow-node-label">DevRev Ticket</div>
+        <div class="flow-node-sub">ISS-1654165</div>
+      </div>
+
+      <div class="flow-node node-vyom" id="fn-vyom">
+        <div class="flow-node-icon">⚡</div>
+        <div class="flow-node-label">Vyom Agent</div>
+        <div class="flow-node-sub">Event Listener</div>
+      </div>
+
+      <div class="flow-node node-repo node-repo1" id="fn-repo1">
+        <div class="flow-node-icon" style="font-size:16px;">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="#94A3B8"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        </div>
+        <div class="flow-node-label" style="font-size:9px;">kube-manifests</div>
+        <div class="flow-node-sub">#24168</div>
+      </div>
+
+      <div class="flow-node node-repo node-repo2" id="fn-repo2">
+        <div class="flow-node-icon" style="font-size:16px;">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="#94A3B8"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        </div>
+        <div class="flow-node-label" style="font-size:9px;">alert-rules</div>
+        <div class="flow-node-sub">#18773</div>
+      </div>
+
+      <div class="flow-node node-repo node-repo3" id="fn-repo3">
+        <div class="flow-node-icon" style="font-size:16px;">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="#94A3B8"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        </div>
+        <div class="flow-node-label" style="font-size:9px;">discover</div>
+        <div class="flow-node-sub">#40</div>
+      </div>
+
+      <div class="flow-node node-repo node-repo4" id="fn-repo4">
+        <div class="flow-node-icon" style="font-size:16px;">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="#94A3B8"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        </div>
+        <div class="flow-node-label" style="font-size:9px;">spinacode</div>
+        <div class="flow-node-sub">#3949</div>
+      </div>
+
+      <div class="flow-node node-result" id="fn-result">
+        <div class="flow-node-icon">✅</div>
+        <div class="flow-node-label">DevRev Updated</div>
+        <div class="flow-node-sub">3 PRs · 28 files · code_changes linked</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="replay-btn" id="replay-btn" onclick="startDemo()">↻ Replay</button>
+</div>
+
+<script>
+let timeouts = [];
+function clearAll() { timeouts.forEach(t => clearTimeout(t)); timeouts = []; }
+function sched(fn, d) { timeouts.push(setTimeout(fn, d)); }
+
+function resetAll() {
+  clearAll();
+  // Events
+  for (let i = 1; i <= 9; i++) document.getElementById('ev'+i).classList.remove('visible');
+  // Flow nodes
+  ['fn-devrev','fn-vyom','fn-repo1','fn-repo2','fn-repo3','fn-repo4','fn-result'].forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('visible');
+    el.classList.remove('active-pulse');
+  });
+  // Arrows
+  document.querySelectorAll('.flow-arrow-active').forEach(el => el.classList.remove('visible'));
+  // Steps
+  ['step1','step2','step3'].forEach(id => document.getElementById(id).classList.remove('visible'));
+  // Replay
+  document.getElementById('replay-btn').classList.remove('visible');
+}
+
+function startDemo() {
+  resetAll();
+
+  // Phase 1: Ticket created
+  sched(() => {
+    document.getElementById('fn-devrev').classList.add('visible');
+    document.getElementById('ev1').classList.add('visible');
+  }, 400);
+
+  sched(() => document.getElementById('ev2').classList.add('visible'), 1000);
+
+  // Phase 2: Vyom picks up
+  sched(() => {
+    document.getElementById('fn-vyom').classList.add('visible');
+    document.getElementById('fn-vyom').classList.add('active-pulse');
+    document.getElementById('arrow1').classList.add('visible');
+    document.getElementById('step1').classList.add('visible');
+    document.getElementById('ev3').classList.add('visible');
+  }, 2000);
+
+  // Phase 3: PRs created (fan out)
+  sched(() => {
+    document.getElementById('step2').classList.add('visible');
+    document.getElementById('arrow2a').classList.add('visible');
+    document.getElementById('arrow2b').classList.add('visible');
+    document.getElementById('arrow2c').classList.add('visible');
+    document.getElementById('arrow2d').classList.add('visible');
+  }, 3500);
+
+  sched(() => {
+    document.getElementById('fn-repo1').classList.add('visible');
+    document.getElementById('ev4').classList.add('visible');
+  }, 4000);
+
+  sched(() => document.getElementById('ev5').classList.add('visible'), 4600);
+
+  sched(() => {
+    document.getElementById('fn-repo2').classList.add('visible');
+    document.getElementById('ev6').classList.add('visible');
+  }, 5200);
+
+  sched(() => document.getElementById('ev7').classList.add('visible'), 5800);
+
+  sched(() => {
+    document.getElementById('fn-repo3').classList.add('visible');
+    document.getElementById('ev8').classList.add('visible');
+  }, 6400);
+
+  sched(() => {
+    document.getElementById('fn-repo4').classList.add('visible');
+  }, 7000);
+
+  // Phase 4: Results flow back
+  sched(() => {
+    document.getElementById('step3').classList.add('visible');
+    document.getElementById('arrow3a').classList.add('visible');
+    document.getElementById('arrow3b').classList.add('visible');
+    document.getElementById('arrow3c').classList.add('visible');
+    document.getElementById('arrow3d').classList.add('visible');
+  }, 8000);
+
+  sched(() => {
+    document.getElementById('fn-result').classList.add('visible');
+    document.getElementById('ev9').classList.add('visible');
+    document.getElementById('fn-vyom').classList.remove('active-pulse');
+  }, 8800);
+
+  sched(() => document.getElementById('replay-btn').classList.add('visible'), 10000);
+
+  // Auto-loop
+  sched(() => startDemo(), 14000);
+}
+
+startDemo();
+</script>
+
+</body>
+</html>

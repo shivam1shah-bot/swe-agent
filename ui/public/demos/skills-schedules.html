@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vyom Skills & Schedules Demo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0F172A;
+    --card: rgba(15,23,42,0.6);
+    --border: rgba(51,65,85,0.6);
+    --text: #E2E8F0;
+    --muted: #94A3B8;
+    --blue: #3B82F6;
+    --cyan: #06B6D4;
+    --green: #22C55E;
+    --purple: #A855F7;
+    --yellow: #EAB308;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  .demo-container {
+    width: 900px;
+    height: 560px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: rgba(15,23,42,0.7);
+    backdrop-filter: blur(12px);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+  }
+
+  .window-chrome {
+    height: 40px;
+    background: rgba(30,41,59,0.8);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 8px;
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-red { background: #EF4444; }
+  .dot-yellow { background: #EAB308; }
+  .dot-green { background: #22C55E; }
+
+  .app-layout { display: flex; height: calc(100% - 40px); }
+
+  /* Sidebar */
+  .sidebar {
+    width: 200px;
+    border-right: 1px solid var(--border);
+    padding: 16px 10px;
+    flex-shrink: 0;
+  }
+  .logo { font-size: 15px; font-weight: 700; margin-bottom: 20px; padding: 0 6px; }
+  .logo span { background: linear-gradient(135deg, #3B82F6, #06B6D4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  .nav-item { padding: 8px 10px; border-radius: 8px; font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+  .nav-item.active { background: rgba(59,130,246,0.15); color: var(--text); }
+  .nav-icon { width: 16px; text-align: center; font-size: 12px; }
+
+  /* Main content */
+  .main-content { flex: 1; overflow: hidden; position: relative; }
+
+  /* Scenes */
+  .scene { position: absolute; inset: 0; opacity: 0; transition: opacity 0.5s; pointer-events: none; }
+  .scene.active { opacity: 1; pointer-events: auto; }
+
+  /* === SCENE 1: Skills catalogue browse === */
+  .s1-header { padding: 20px 24px 14px; display: flex; justify-content: space-between; align-items: flex-start; }
+  .s1-title { font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .s1-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .s1-count { font-size: 12px; color: var(--muted); }
+
+  .search-bar {
+    margin: 0 24px 14px;
+    padding: 8px 14px;
+    background: rgba(15,23,42,0.6);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .search-bar .search-icon { color: var(--muted); }
+  .search-text { color: var(--muted); }
+  .search-typed { color: var(--text); }
+  .typing-cursor { display: inline-block; width: 2px; height: 14px; background: var(--blue); animation: blink 0.8s infinite; vertical-align: middle; margin-left: 1px; }
+  @keyframes blink { 0%,50% { opacity: 1; } 51%,100% { opacity: 0; } }
+
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 0 24px;
+  }
+
+  .skill-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all 0.4s ease;
+  }
+  .skill-card.visible { opacity: 1; transform: translateY(0); }
+  .skill-card.highlight { border-color: rgba(168,85,247,0.4); box-shadow: 0 0 20px rgba(168,85,247,0.08); }
+
+  .skill-icon-name { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .skill-dot { width: 28px; height: 28px; border-radius: 8px; background: rgba(168,85,247,0.12); display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+  .skill-name { font-weight: 700; font-size: 13px; }
+  .skill-desc { font-size: 11px; color: var(--muted); line-height: 1.4; margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .skill-actions { display: flex; gap: 6px; }
+  .btn-run {
+    flex: 1;
+    padding: 6px 0;
+    border-radius: 6px;
+    background: rgba(168,85,247,0.15);
+    border: 1px solid rgba(168,85,247,0.25);
+    color: var(--purple);
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .btn-schedule {
+    flex: 1;
+    padding: 6px 0;
+    border-radius: 6px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .btn-schedule.pulse-highlight {
+    border-color: rgba(59,130,246,0.5);
+    color: var(--blue);
+    background: rgba(59,130,246,0.08);
+    animation: btnPulse 1s ease 2;
+  }
+  @keyframes btnPulse {
+    0%,100% { box-shadow: none; }
+    50% { box-shadow: 0 0 12px rgba(59,130,246,0.2); }
+  }
+
+  /* === SCENE 2: Schedule modal + cron === */
+  .s2-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+  }
+  .schedule-modal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 440px;
+    background: #1E293B;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .modal-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 16px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .modal-tab {
+    flex: 1;
+    padding: 8px 0;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    background: transparent;
+    cursor: default;
+    transition: all 0.3s;
+  }
+  .modal-tab.active {
+    background: rgba(59,130,246,0.15);
+    color: var(--text);
+  }
+  .modal-label {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: var(--text);
+  }
+  .modal-textarea {
+    width: 100%;
+    height: 60px;
+    background: rgba(15,23,42,0.6);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+    resize: none;
+    margin-bottom: 14px;
+    line-height: 1.5;
+  }
+  .cron-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+  }
+  .cron-chip {
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    cursor: default;
+    transition: all 0.3s;
+  }
+  .cron-chip.selected {
+    background: rgba(59,130,246,0.12);
+    border-color: rgba(59,130,246,0.3);
+    color: var(--blue);
+  }
+  .cron-input {
+    width: 100%;
+    padding: 8px 12px;
+    background: rgba(15,23,42,0.6);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+  .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+  .btn-cancel {
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+  }
+  .btn-queue {
+    padding: 8px 18px;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(135deg, #7C3AED, #6D28D9);
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.3s;
+  }
+  .btn-queue.clicked { transform: scale(0.95); opacity: 0.8; }
+
+  /* === SCENE 3: Running + Slack notification === */
+  .s3-content { padding: 20px 24px; }
+  .s3-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+  .s3-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;
+  }
+  .status-running { background: rgba(59,130,246,0.15); color: var(--blue); border: 1px solid rgba(59,130,246,0.3); }
+  .status-completed { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+
+  .progress-container {
+    background: rgba(30,41,59,0.5);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    border: 1px solid var(--border);
+  }
+  .progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .progress-bar { height: 6px; background: rgba(51,65,85,0.5); border-radius: 3px; overflow: hidden; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, var(--purple), var(--blue)); border-radius: 3px; transition: width 0.8s ease; width: 0%; }
+
+  /* Skill execution log */
+  .exec-log {
+    background: rgba(15,23,42,0.8);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.7;
+    height: 180px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  .log-line { opacity: 0; transform: translateY(4px); transition: all 0.3s; }
+  .log-line.visible { opacity: 1; transform: translateY(0); }
+  .log-ts { color: #475569; }
+  .log-info { color: var(--blue); }
+  .log-success { color: var(--green); }
+  .log-mcp { color: var(--cyan); }
+
+  /* Slack notification card */
+  .slack-card {
+    background: rgba(54,197,240,0.06);
+    border: 1px solid rgba(54,197,240,0.15);
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    gap: 10px;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all 0.5s ease;
+  }
+  .slack-card.visible { opacity: 1; transform: translateY(0); }
+  .slack-avatar {
+    width: 32px; height: 32px; border-radius: 6px;
+    background: linear-gradient(135deg, #3B82F6, #06B6D4);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px; color: white; flex-shrink: 0;
+  }
+  .slack-msg-header { display: flex; align-items: baseline; gap: 6px; margin-bottom: 3px; }
+  .slack-author { font-weight: 700; font-size: 13px; }
+  .slack-badge { font-size: 9px; background: rgba(29,155,209,0.15); color: #1D9BD1; padding: 1px 5px; border-radius: 3px; font-weight: 600; }
+  .slack-time { font-size: 10px; color: var(--muted); }
+  .slack-text { font-size: 12px; color: #CBD5E1; line-height: 1.5; }
+  .slack-text strong { color: var(--text); }
+  .slack-text code { font-family: 'JetBrains Mono', monospace; font-size: 10px; background: rgba(255,255,255,0.06); padding: 1px 4px; border-radius: 3px; color: #E06C75; border: 1px solid rgba(255,255,255,0.08); }
+
+  /* Schedule indicator */
+  .schedule-info {
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--muted);
+    padding: 6px 10px;
+    background: rgba(59,130,246,0.06);
+    border-radius: 6px;
+    border: 1px solid rgba(59,130,246,0.1);
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .schedule-info.visible { opacity: 1; }
+  .schedule-info .cron-val {
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--blue);
+    font-weight: 600;
+  }
+
+  /* Replay */
+  .replay-btn {
+    position: absolute; bottom: 12px; right: 12px;
+    background: rgba(168,85,247,0.12);
+    border: 1px solid rgba(168,85,247,0.25);
+    color: var(--purple);
+    padding: 5px 12px; border-radius: 6px;
+    font-size: 11px; font-weight: 600;
+    cursor: pointer; z-index: 100;
+    opacity: 0; transition: all 0.3s;
+    font-family: 'Inter', sans-serif;
+  }
+  .replay-btn.visible { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="demo-container">
+  <div class="window-chrome">
+    <div class="dot dot-red"></div>
+    <div class="dot dot-yellow"></div>
+    <div class="dot dot-green"></div>
+  </div>
+
+  <div class="app-layout">
+    <div class="sidebar">
+      <div class="logo">Razorpay <span>Vyom</span></div>
+      <div class="nav-item"><span class="nav-icon">🏠</span> Home</div>
+      <div class="nav-item"><span class="nav-icon">🤖</span> Autonomous Agent</div>
+      <div class="nav-item"><span class="nav-icon">📦</span> Agents Catalogue</div>
+      <div class="nav-item active" id="nav-skills"><span class="nav-icon">✨</span> Skills Catalogue</div>
+      <div class="nav-item"><span class="nav-icon">📋</span> Tasks</div>
+      <div class="nav-item"><span class="nav-icon">⚡</span> MCP Gateway</div>
+      <div class="nav-item"><span class="nav-icon">👥</span> Team</div>
+    </div>
+
+    <div class="main-content">
+      <!-- SCENE 1: Browse skills catalogue -->
+      <div class="scene active" id="scene1">
+        <div class="s1-header">
+          <div>
+            <div class="s1-title">✨ Skills Catalogue</div>
+            <div class="s1-sub">Discover and run available agent skills</div>
+          </div>
+          <div class="s1-count" id="skill-count">147 of 147 skills</div>
+        </div>
+
+        <div class="search-bar" id="search-bar">
+          <span class="search-icon">🔍</span>
+          <span id="search-content"><span class="search-text">Search skills...</span></span>
+        </div>
+
+        <div class="skills-grid" id="skills-grid">
+          <div class="skill-card" id="sk1">
+            <div class="skill-icon-name"><div class="skill-dot">📊</div><div class="skill-name">Dev Productivity Analytics</div></div>
+            <div class="skill-desc">Generate Trino SQL queries for GitHub PR analytics and developer productivity metrics.</div>
+            <div class="skill-actions"><div class="btn-run">▶ Run</div><div class="btn-schedule">🕐 Schedule</div></div>
+          </div>
+          <div class="skill-card" id="sk2">
+            <div class="skill-icon-name"><div class="skill-dot">🔍</div><div class="skill-name">Report Compare</div></div>
+            <div class="skill-desc">Compare live and shadow report files by matching on unique ID columns to identify mismatches.</div>
+            <div class="skill-actions"><div class="btn-run">▶ Run</div><div class="btn-schedule">🕐 Schedule</div></div>
+          </div>
+          <div class="skill-card" id="sk7">
+            <div class="skill-icon-name"><div class="skill-dot">⚡</div><div class="skill-name">Trino Cluster Monitor</div></div>
+            <div class="skill-desc">Monitor Trino cluster health, track query queue depth, and alert on resource bottlenecks.</div>
+            <div class="skill-actions"><div class="btn-run">▶ Run</div><div class="btn-schedule">🕐 Schedule</div></div>
+          </div>
+          <div class="skill-card highlight" id="sk3">
+            <div class="skill-icon-name"><div class="skill-dot">💰</div><div class="skill-name">Trino Query Cost Analyzer</div></div>
+            <div class="skill-desc">Analyze Trino query costs by examining query plans, estimating CPU/memory/S3 requirements.</div>
+            <div class="skill-actions"><div class="btn-run">▶ Run</div><div class="btn-schedule pulse-highlight" id="btn-sched-highlight">🕐 Schedule</div></div>
+          </div>
+          <div class="skill-card" id="sk4">
+            <div class="skill-icon-name"><div class="skill-dot">🐦</div><div class="skill-name">Flink Optimizer</div></div>
+            <div class="skill-desc">Optimize Flink job code and configuration based on runtime metrics and execution flow graph.</div>
+            <div class="skill-actions"><div class="btn-run">▶ Run</div><div class="btn-schedule">🕐 Schedule</div></div>
+          </div>
+          <div class="skill-card" id="sk5">
+            <div class="skill-icon-name"><div class="skill-dot">🏗</div><div class="skill-name">Foundation Onboarding</div></div>
+            <div class="skill-desc">Foundation framework usage guide and integration assistant for developers.</div>
+            <div class="skill-actions"><div class="btn-run">▶ Run</div><div class="btn-schedule">🕐 Schedule</div></div>
+          </div>
+          <div class="skill-card" id="sk6">
+            <div class="skill-icon-name"><div class="skill-dot">🔄</div><div class="skill-name">Banking Org Onboarding</div></div>
+            <div class="skill-desc">Onboard new banking organizations across all service repos, kube-manifests, and configs.</div>
+            <div class="skill-actions"><div class="btn-run">▶ Run</div><div class="btn-schedule">🕐 Schedule</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCENE 2: Schedule modal -->
+      <div class="scene" id="scene2">
+        <div class="s2-backdrop"></div>
+        <div class="schedule-modal">
+          <div class="modal-title">🕐 Schedule: Trino Query Cost Analyzer</div>
+          <div class="modal-tabs">
+            <div class="modal-tab" id="tab-once">Run Once</div>
+            <div class="modal-tab active" id="tab-recurring">Recurring</div>
+          </div>
+          <div class="modal-label">Task description *</div>
+          <div class="modal-textarea" id="modal-desc">Analyze top 50 costliest Trino queries from the last 24h. Flag any query exceeding $2 CPU-cost. Post summary to #data-eng-alerts.</div>
+          <div class="modal-label">Cron expression</div>
+          <div class="cron-presets">
+            <div class="cron-chip selected" id="cron-daily">Every day at 9am</div>
+            <div class="cron-chip" id="cron-weekly">Every Monday at 9am</div>
+            <div class="cron-chip" id="cron-hour">Every hour</div>
+            <div class="cron-chip" id="cron-6h">Every 6 hours</div>
+          </div>
+          <div class="cron-input" id="cron-value">0 9 * * *</div>
+          <div class="modal-actions">
+            <div class="btn-cancel">Cancel</div>
+            <div class="btn-queue" id="btn-queue">🕐 Queue Task</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCENE 3: Execution + Slack output -->
+      <div class="scene" id="scene3">
+        <div class="s3-content">
+          <div class="s3-header">
+            <div class="s3-title">✨ Trino Query Cost Analyzer</div>
+            <div class="status-badge status-running" id="s3-status">⏳ Running</div>
+          </div>
+
+          <div class="schedule-info" id="sched-info">
+            🔁 Recurring: <span class="cron-val">0 9 * * *</span> · Next run: Tomorrow 9:00 AM
+          </div>
+
+          <div class="progress-container">
+            <div class="progress-label">
+              <span>Execution progress</span>
+              <span id="progress-pct">0%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+          </div>
+
+          <div class="exec-log" id="exec-log">
+            <div class="log-line" id="log1"><span class="log-ts">[09:00:01]</span> <span class="log-info">Starting Trino Query Cost Analyzer...</span></div>
+            <div class="log-line" id="log2"><span class="log-ts">[09:00:02]</span> <span class="log-mcp">MCP → Connecting to Trino query history...</span></div>
+            <div class="log-line" id="log3"><span class="log-ts">[09:00:08]</span> <span class="log-info">Fetched 2,847 queries from last 24h</span></div>
+            <div class="log-line" id="log4"><span class="log-ts">[09:00:12]</span> <span class="log-info">Analyzing CPU/memory/S3 costs per query...</span></div>
+            <div class="log-line" id="log5"><span class="log-ts">[09:00:28]</span> <span style="color:#EF4444;">⚠ Found 12 queries exceeding $2 CPU-cost threshold</span></div>
+            <div class="log-line" id="log6"><span class="log-ts">[09:00:30]</span> <span class="log-info">Generating optimization recommendations...</span></div>
+            <div class="log-line" id="log7"><span class="log-ts">[09:00:35]</span> <span class="log-mcp">MCP → Posting summary to #data-eng-alerts</span></div>
+            <div class="log-line" id="log8"><span class="log-ts">[09:00:36]</span> <span class="log-success">✅ Task completed — 12 alerts posted, 3 quick-wins identified</span></div>
+          </div>
+
+          <div class="slack-card" id="slack-card">
+            <div class="slack-avatar">K</div>
+            <div>
+              <div class="slack-msg-header">
+                <span class="slack-author">Vyom</span>
+                <span class="slack-badge">APP</span>
+                <span class="slack-time">9:00 AM</span>
+              </div>
+              <div class="slack-text">
+                📊 <strong>Daily Trino Cost Report</strong> — March 9, 2026<br>
+                Analyzed <strong>2,847 queries</strong> · Found <strong>12 high-cost</strong> (>$2 CPU)<br>
+                Top offender: <code>SELECT * FROM payments JOIN...</code> → $14.2 CPU<br>
+                💡 <strong>3 quick-wins</strong> could save ~$180/day — see thread for details
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button class="replay-btn" id="replay-btn" onclick="startDemo()">↻ Replay</button>
+</div>
+
+<script>
+let timeouts = [];
+function clearAll() { timeouts.forEach(t => clearTimeout(t)); timeouts = []; }
+function sched(fn, d) { timeouts.push(setTimeout(fn, d)); }
+
+function resetAll() {
+  clearAll();
+  document.getElementById('scene1').classList.add('active');
+  document.getElementById('scene2').classList.remove('active');
+  document.getElementById('scene3').classList.remove('active');
+
+  // Reset skill cards
+  for (let i = 1; i <= 7; i++) {
+    const el = document.getElementById('sk'+i);
+    el.classList.remove('visible');
+    el.style.opacity = '';
+    el.style.display = i === 7 ? 'none' : '';
+    el.style.transition = '';
+  }
+
+  // Reset search
+  document.getElementById('search-content').innerHTML = '<span class="search-text">Search skills...</span>';
+  document.getElementById('skill-count').textContent = '147 of 147 skills';
+
+  // Reset scene 3
+  document.getElementById('progress-fill').style.width = '0%';
+  document.getElementById('progress-pct').textContent = '0%';
+  document.getElementById('s3-status').className = 'status-badge status-running';
+  document.getElementById('s3-status').innerHTML = '⏳ Running';
+  for (let i = 1; i <= 8; i++) document.getElementById('log'+i).classList.remove('visible');
+  document.getElementById('slack-card').classList.remove('visible');
+  document.getElementById('sched-info').classList.remove('visible');
+  document.getElementById('replay-btn').classList.remove('visible');
+  document.getElementById('btn-queue').classList.remove('clicked');
+}
+
+function startDemo() {
+  resetAll();
+
+  // Scene 1: Cards appear
+  for (let i = 1; i <= 6; i++) {
+    sched(() => document.getElementById('sk'+i).classList.add('visible'), 300 + i * 150);
+  }
+
+  // Search typing
+  const searchText = "trino cost";
+  sched(() => {
+    let typed = '';
+    for (let c = 0; c < searchText.length; c++) {
+      sched(() => {
+        typed += searchText[c];
+        document.getElementById('search-content').innerHTML = '<span class="search-typed">' + typed + '</span><span class="typing-cursor"></span>';
+      }, 2200 + c * 80);
+    }
+  }, 0);
+
+  // Filter cards after search — hide non-matching, show sk7
+  sched(() => {
+    document.getElementById('skill-count').textContent = '3 of 147 skills';
+    ['sk2','sk4','sk5','sk6'].forEach(id => {
+      const el = document.getElementById(id);
+      el.style.transition = 'opacity 0.3s';
+      el.style.opacity = '0';
+      setTimeout(() => { el.style.display = 'none'; }, 300);
+    });
+    // Show the hidden matching card sk7
+    const sk7 = document.getElementById('sk7');
+    sk7.style.display = '';
+    sk7.classList.add('visible');
+  }, 3400);
+
+  // Click schedule on highlighted card
+  sched(() => {
+    document.getElementById('scene1').classList.remove('active');
+    document.getElementById('scene2').classList.add('active');
+  }, 5000);
+
+  // Click queue
+  sched(() => {
+    document.getElementById('btn-queue').classList.add('clicked');
+  }, 7500);
+
+  // Scene 3: Execution
+  sched(() => {
+    document.getElementById('scene2').classList.remove('active');
+    document.getElementById('scene3').classList.add('active');
+    document.getElementById('nav-skills').classList.remove('active');
+    document.querySelector('.nav-item:nth-child(5)').classList.add('active');
+  }, 8200);
+
+  sched(() => document.getElementById('sched-info').classList.add('visible'), 8800);
+
+  // Logs + progress
+  const logTimings = [9200, 9800, 10600, 11200, 12000, 12800, 13400, 14200];
+  const progressSteps = [8, 20, 40, 55, 72, 85, 95, 100];
+  logTimings.forEach((t, i) => {
+    sched(() => {
+      document.getElementById('log'+(i+1)).classList.add('visible');
+      document.getElementById('progress-fill').style.width = progressSteps[i] + '%';
+      document.getElementById('progress-pct').textContent = progressSteps[i] + '%';
+    }, t);
+  });
+
+  // Complete
+  sched(() => {
+    document.getElementById('s3-status').className = 'status-badge status-completed';
+    document.getElementById('s3-status').innerHTML = '✅ Completed';
+  }, 14600);
+
+  // Slack notification
+  sched(() => document.getElementById('slack-card').classList.add('visible'), 15200);
+
+  sched(() => document.getElementById('replay-btn').classList.add('visible'), 16500);
+
+  // Auto-loop
+  sched(() => startDemo(), 20000);
+}
+
+startDemo();
+</script>
+
+</body>
+</html>

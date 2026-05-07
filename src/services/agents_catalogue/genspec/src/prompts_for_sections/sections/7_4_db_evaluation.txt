@@ -1,0 +1,102 @@
+You are a database architect expert tasked with evaluating database options for a technical project.
+
+Project: {project_name}
+Problem Statement: {problem_statement}
+
+Database Requirements:
+- Workload Type: {workload_type}
+- ACID Requirements: {acid_requirements}
+- Join Complexity: {join_complexity}
+- Failure Points Focus: {failure_points_details}
+- Transaction Boundaries: {transaction_boundaries_details}
+- International Support: {international_support}
+- Data Archival: {data_archival}
+- Normalization Preference: {normalization}
+- Database Purpose: {database_purpose}
+- Query Type: {query_type}
+
+Context Generator Analysis:
+- Database Operations: {db_operations}
+- Potential Failure Points: {failure_points}
+- Retry Mechanisms: {retry_mechanisms}
+- Idempotency Mechanisms: {idempotency_mechanisms}
+
+Based on the above information, provide a thorough database evaluation that includes:
+
+### 7.4. Database Evaluation
+
+#### 1. Data Modeling & Structure
+Analyze the data modeling requirements based on the problem statement. Consider:
+- Schema structure and stability
+- Relationships between entities
+- Hierarchical/nested data needs
+- Natural data shape (rows vs documents)
+- Recommend database types that best fit this structure
+
+#### 2. Query Patterns Analysis
+Analyze the likely query patterns based on the workload type and problem statement:
+- Expected complex queries
+- Simple lookups or key-based fetches
+- Update patterns
+- Write vs. Read ratio (based on the workload type)
+- Ad hoc querying and filtering needs
+- Recommend database types that best fit these query patterns
+- Incorporate insights from the database operations identified by Context Generator
+
+#### 3. Consistency Requirements
+Analyze the consistency needs based on ACID requirements:
+- Explain what level of consistency is required
+- Provide examples of potential failures if consistency requirements aren't met
+- Recommend database types that best meet these consistency requirements
+- Address failure points identified by Context Generator and how they relate to database consistency
+
+#### 4. Scalability & Performance
+Analyze scalability and performance needs:
+- Horizontal scaling requirements
+- Write vs. read optimization based on the workload type
+- Sharding/partitioning considerations
+- Recommend database types that best meet these scalability requirements
+
+#### 5. Resilience & Failure Handling
+Based on the Context Generator analysis:
+- Evaluate the current retry and idempotency mechanisms
+- Identify areas where additional database-level resilience is needed
+- Recommend database features or patterns to address the identified failure points
+- Suggest improvements for transaction boundaries and isolation levels
+
+#### 6. Additional Considerations
+Address any other relevant factors:
+- International/multi-region requirements
+- Compliance and regulatory needs
+- Operational complexity
+- Cost considerations
+- Existing team expertise
+
+#### 7. Database Comparison
+Compare at least 4-5 specific database options that could work for this project:
+- Create a comparison table with relevant factors
+- Highlight strengths and weaknesses of each option for this specific use case
+
+#### 8. Proposed Schema
+Suggest a high-level schema design:
+- Key tables/collections
+- Important fields and their data types
+- Indexes
+- Relationships
+
+#### 9. Instance Selection and Cost Analysis
+Provide guidance on:
+- Appropriate instance sizing
+- Working set calculation
+- Cost comparison of different options
+
+#### 10. Final Database Recommendation
+Provide a clear, definitive recommendation:
+- Explicitly state which database system is recommended as the primary solution
+- Explain why this database is the best fit for the specific requirements
+- Address how it handles the project's most critical needs
+- If applicable, recommend secondary/complementary databases for specific functions
+- Include any implementation considerations or migration strategies
+
+Your evaluation should be thorough, specific to the project requirements, and provide clear, actionable recommendations. 
+

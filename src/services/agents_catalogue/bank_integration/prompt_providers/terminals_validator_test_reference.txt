@@ -1,0 +1,200 @@
+TERMINALS VALIDATOR TEST REFERENCE - internal/gateway_credentials/validator_test.go
+
+REQUIRED MODIFICATIONS FOR BANK INTEGRATION:
+
+FILE: terminals/internal/gateway_credentials/validator_test.go
+
+PURPOSE: Add comprehensive test cases for new bank gateway credential validation
+
+🔥 CRITICAL: This file contains test cases that must be added to validate new bank integration works correctly.
+
+INTEGRATION POINT:
+
+## TEST CASE ADDITION (Line ~402-440)
+LOCATION: func TestValidateOptimizerGatewayCredential(t *testing.T)
+REFERENCE PATTERN: Lines 402-440 - fts_idfc test cases
+INSTRUCTION: Add 3 test cases for new bank following exact same pattern
+
+REFERENCE CODE PATTERN:
+```go
+// Test Case 1: Valid Scenario (Should Pass)
+gatewayCredentialDao = daos.GatewayCredential{
+    OrgId:   "100000razorpay",
+    Gateway: "fts_idfc",
+    Identifiers: map[string]interface{}{
+        "url": "https://testexample.com",
+    },
+    Secrets: map[string]interface{}{
+        "api_key": "test123",
+    },
+}
+err = ValidateGatewayCredential(&gatewayCredentialDao)
+assert.Nil(t, err)
+
+// Test Case 2: Invalid OrgId (Should Fail)
+gatewayCredentialDao = daos.GatewayCredential{
+    OrgId:   "100001razorpayXXX",  // Invalid: too long
+    Gateway: "fts_idfc",
+    Identifiers: map[string]interface{}{
+        "url": "https://testexample.com",
+    },
+    Secrets: map[string]interface{}{
+        "api_key":   "test123",
+        "client_id": "12345",
+    },
+}
+err = ValidateGatewayCredential(&gatewayCredentialDao)
+assert.NotNil(t, err)
+
+// Test Case 3: Invalid Gateway (Should Fail)
+gatewayCredentialDao = daos.GatewayCredential{
+    OrgId:   "100001razorpay",
+    Gateway: "abc_123",  // Invalid gateway name
+    Identifiers: map[string]interface{}{
+        "url": "https://testexample.com",
+    },
+    Secrets: map[string]interface{}{
+        "api_key": "test123",
+    },
+}
+err = ValidateGatewayCredential(&gatewayCredentialDao)
+assert.NotNil(t, err)
+```
+
+EXAMPLE FOR NEW BANK:
+```go
+// Existing IDFC test cases...
+gatewayCredentialDao = daos.GatewayCredential{
+    OrgId:   "100000razorpay",
+    Gateway: "fts_idfc",
+    Identifiers: map[string]interface{}{
+        "url": "https://testexample.com",
+    },
+    Secrets: map[string]interface{}{
+        "api_key": "test123",
+    },
+}
+err = ValidateGatewayCredential(&gatewayCredentialDao)
+assert.Nil(t, err)
+
+// Add these 3 test cases for new bank
+gatewayCredentialDao = daos.GatewayCredential{
+    OrgId:   "100000razorpay",
+    Gateway: "fts_newbank",  // Replace with actual new bank
+    Identifiers: map[string]interface{}{
+        "url": "https://testexample.com",
+    },
+    Secrets: map[string]interface{}{
+        "api_key": "test123",
+    },
+}
+err = ValidateGatewayCredential(&gatewayCredentialDao)
+assert.Nil(t, err)
+
+gatewayCredentialDao = daos.GatewayCredential{
+    OrgId:   "100001razorpayXXX",  // Invalid OrgId
+    Gateway: "fts_newbank",
+    Identifiers: map[string]interface{}{
+        "url": "https://testexample.com",
+    },
+    Secrets: map[string]interface{}{
+        "api_key":   "test123",
+        "client_id": "12345",
+    },
+}
+err = ValidateGatewayCredential(&gatewayCredentialDao)
+assert.NotNil(t, err)
+
+gatewayCredentialDao = daos.GatewayCredential{
+    OrgId:   "100001razorpay",
+    Gateway: "abc_123",  // Invalid gateway (remains same for all tests)
+    Identifiers: map[string]interface{}{
+        "url": "https://testexample.com",
+    },
+    Secrets: map[string]interface{}{
+        "api_key": "test123",
+    },
+}
+err = ValidateGatewayCredential(&gatewayCredentialDao)
+assert.NotNil(t, err)
+```
+
+## TEST CASE EXPLANATION:
+
+### Test Case 1: Valid Scenario
+- **Purpose**: Verify new bank validation works with correct data
+- **OrgId**: "100000razorpay" (valid 14-char alphanumeric)
+- **Gateway**: "fts_newbank" (replace with actual bank)
+- **Expected**: assert.Nil(t, err) - should pass validation
+
+### Test Case 2: Invalid OrgId Scenario
+- **Purpose**: Verify validation fails with malformed org_id
+- **OrgId**: "100001razorpayXXX" (17 chars, exceeds 14-char limit)
+- **Gateway**: "fts_newbank" (replace with actual bank)
+- **Expected**: assert.NotNil(t, err) - should fail validation
+
+### Test Case 3: Invalid Gateway Scenario  
+- **Purpose**: Verify validation fails with unrecognized gateway
+- **OrgId**: "100001razorpay" (valid format)
+- **Gateway**: "abc_123" (invalid/unrecognized gateway name)
+- **Expected**: assert.NotNil(t, err) - should fail validation
+
+## ADAPTATION REQUIREMENTS:
+
+1. **Naming Convention**: 
+   - Replace "newbank" with actual bank name in lowercase
+   - Format: "fts_" + lowercase bank name
+
+2. **Test Data Consistency**:
+   - Use same URL: "https://testexample.com"
+   - Use same API key: "test123"
+   - Use same client_id for invalid test: "12345"
+
+3. **Positioning**:
+   - Add immediately after existing fts_idfc test cases
+   - Maintain same order: valid → invalid OrgId → invalid Gateway
+
+4. **Assertion Patterns**:
+   - Valid case: assert.Nil(t, err)
+   - Invalid cases: assert.NotNil(t, err)
+
+## VERIFICATION STEPS:
+
+After adding test cases, verify with grep commands:
+```bash
+# 1. Check new bank test cases added
+grep -A 15 '"fts_newbank"' internal/gateway_credentials/validator_test.go
+
+# 2. Count test cases for new bank (should be 3)
+grep -c '"fts_newbank"' internal/gateway_credentials/validator_test.go
+
+# 3. Verify test structure matches IDFC pattern
+grep -B 2 -A 12 'Gateway: "fts_' internal/gateway_credentials/validator_test.go
+
+# 4. Check assertion patterns are correct
+grep -A 1 'fts_newbank.*}$' internal/gateway_credentials/validator_test.go | grep assert
+```
+
+## CRITICAL NOTES:
+
+- **EXACT PATTERN MATCH**: Follow IDFC test structure precisely
+- **3 TEST CASES REQUIRED**: Valid, Invalid OrgId, Invalid Gateway  
+- **CONSISTENT TEST DATA**: Use same identifiers and secrets as IDFC
+- **PROPER ASSERTIONS**: Nil for valid case, NotNil for invalid cases
+- **MAINTAIN ORDER**: Add after existing FTS tests, before other gateway tests
+
+## CONSEQUENCES OF MISSING TEST CASES:
+
+❌ **No test coverage**: New bank validation not tested in CI/CD pipeline
+❌ **Regression risk**: Changes could break validation without detection
+❌ **Security gaps**: Invalid data might pass validation undetected
+❌ **Integration failures**: Issues only discovered in production
+
+SUCCESS CRITERIA:
+✅ 3 test cases added for new bank (valid + 2 invalid scenarios)
+✅ Test cases follow exact IDFC pattern with proper naming
+✅ Correct assertion patterns (Nil for valid, NotNil for invalid)
+✅ All grep verification commands show expected results
+✅ Tests run successfully and validate new bank properly
+
+This file ensures comprehensive test coverage for new bank credential validation security.

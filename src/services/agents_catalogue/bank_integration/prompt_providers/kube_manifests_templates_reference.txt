@@ -1,0 +1,266 @@
+KUBE-MANIFESTS DEPLOYMENT TEMPLATES REFERENCE
+
+This reference provides patterns for creating 18 Kubernetes deployment template files for a new bank integration in the kube-manifests service.
+
+## File Structure
+Target directory: `kube-manifests/templates/fts/templates/`
+
+## Required Template Files (18 total):
+
+### Core Operations (2 files):
+1. fts-live-worker-newbank-initiate-transfer-deployment.yaml
+2. fts-live-worker-newbank-check-transfer-status-deployment.yaml
+
+### UPI Operations (2 files):
+3. fts-live-worker-newbank-upi-initiate-transfer-deployment.yaml
+4. fts-live-worker-newbank-upi-check-transfer-status-deployment.yaml
+
+### IMPS Operations (2 files):
+5. fts-live-worker-newbank-imps-initiate-transfer-deployment.yaml
+6. fts-live-worker-newbank-imps-check-transfer-status-deployment.yaml
+
+### NEFT Operations (2 files):
+7. fts-live-worker-newbank-neft-initiate-transfer-deployment.yaml
+8. fts-live-worker-newbank-neft-check-transfer-status-deployment.yaml
+
+### RTGS Operations (2 files):
+9. fts-live-worker-newbank-rtgs-initiate-transfer-deployment.yaml
+10. fts-live-worker-newbank-rtgs-check-transfer-status-deployment.yaml
+
+### Direct UPI Operations (2 files):
+11. fts-live-worker-newbank-direct-upi-initiate-transfer-deployment.yaml
+12. fts-live-worker-newbank-direct-upi-check-transfer-status-deployment.yaml
+
+### Direct IMPS Operations (2 files):
+13. fts-live-worker-newbank-direct-imps-initiate-transfer-deployment.yaml
+14. fts-live-worker-newbank-direct-imps-check-transfer-status-deployment.yaml
+
+### Direct NEFT Operations (2 files):
+15. fts-live-worker-newbank-direct-neft-initiate-transfer-deployment.yaml
+16. fts-live-worker-newbank-direct-neft-check-transfer-status-deployment.yaml
+
+### Direct RTGS Operations (2 files):
+17. fts-live-worker-newbank-direct-rtgs-initiate-transfer-deployment.yaml
+18. fts-live-worker-newbank-direct-rtgs-check-transfer-status-deployment.yaml
+
+## Template Structure
+
+Each deployment file contains THREE deployments:
+1. **Main Deployment** - Standard worker
+2. **Canary Deployment** - Canary testing (conditional)
+3. **Baseline Deployment** - Baseline testing (conditional)
+
+## Core Template Pattern
+
+Based on IDFC reference templates, here's the complete template structure:
+
+### For Standard Operations (Core/UPI/IMPS/NEFT/RTGS):
+
+**Filename**: `fts-live-worker-newbank-{operation}-deployment.yaml`
+**Worker Args**: `newbank::{operation}`
+
+Example for UPI Initiate Transfer:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    bu: razorpayx
+    name: {{ .Values.name }}-live-worker-newbank-upi-initiate-transfer
+  name: {{ .Values.name }}-live-worker-newbank-upi-initiate-transfer
+  namespace: '{{ .Values.namespace }}'
+spec:
+  progressDeadlineSeconds: 600
+  replicas: {{.Values.fts_live_worker_newbank_upi_initiate_transfer_replicas}}
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      name: {{ .Values.name }}-live-worker-newbank-upi-initiate-transfer
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      annotations:
+        prometheus.app/port: "8081"
+        prometheus.app/scrape: "true"
+      creationTimestamp: null
+      labels:
+        bu: razorpayx
+        name: {{ .Values.name }}-live-worker-newbank-upi-initiate-transfer
+      name: {{ .Values.name }}-live-worker-newbank-upi-initiate-transfer
+    spec:
+      serviceAccountName: {{ .Values.service_account_name }}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: name
+                      operator: In
+                      values:
+                        - {{ .Values.name }}-live-worker-newbank-upi-initiate-transfer
+                topologyKey: kubernetes.io/hostname
+              weight: 100
+      automountServiceAccountToken: true
+      containers:
+        - args:
+            - worker
+            - newbank::upi::initiate_transfer
+          env:
+            - name: APP_MODE
+              value: live
+            - name: APP_ENV
+              value: {{ .Values.app_env }}
+            - name: JAEGER_HOSTNAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+          envFrom:
+            - secretRef:
+                name: {{ .Values.name }}-live
+                optional: false
+          image: c.rzp.io/razorpay/{{ .Values.fts_image }}
+          imagePullPolicy: IfNotPresent
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /status
+              port: 80
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 2
+          name: live
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /status
+              port: 80
+              scheme: HTTP
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 2
+          resources:
+            requests:
+              cpu: {{.Values.fts_worker_cpu_requsts}}
+              memory: {{.Values.fts_worker_memory_requsts}}
+            limits:
+              memory: {{.Values.fts_worker_memory_limits}}
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /config/
+              name: fts-app-config
+              readOnly: true
+      dnsPolicy: ClusterFirst
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "1"
+      nodeSelector:
+        {{ .Values.queues_node_selector }}: ""
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 60
+      volumes:
+        - configMap:
+            defaultMode: 420
+            name: fts-app-config
+          name: fts-app-config
+
+{{ if .Values.canary_baseline_enable }}
+---
+# CANARY DEPLOYMENT (similar structure with -canary suffix and INSTANCE_TYPE: canary)
+# BASELINE DEPLOYMENT (similar structure with -baseline suffix and INSTANCE_TYPE: baseline)
+{{ end }}
+```
+
+### For Direct Operations (Direct UPI/IMPS/NEFT/RTGS):
+
+**Filename**: `fts-live-worker-newbank-direct-{operation}-deployment.yaml`
+**Worker Args**: `newbank::direct::{operation}`
+
+Example for Direct UPI Initiate Transfer:
+- Name: `{{ .Values.name }}-live-worker-newbank-direct-upi-initiate-transfer`
+- Replicas: `{{.Values.fts_live_worker_newbank_direct_upi_initiate_transfer_replicas}}`
+- Worker Args: `newbank::direct::upi::initiate_transfer`
+
+## Template Variable Patterns
+
+### Naming Patterns:
+- **Standard**: `newbank-{operation}` → `newbank-upi-initiate-transfer`
+- **Direct**: `newbank-direct-{operation}` → `newbank-direct-upi-initiate-transfer`
+
+### Replica Variable Patterns:
+- **Standard**: `fts_live_worker_newbank_{operation}_replicas`
+- **Standard Canary**: `fts_live_worker_newbank_{operation}_canary_replicas`
+- **Standard Baseline**: `fts_live_worker_newbank_{operation}_baseline_replicas`
+- **Direct**: `fts_live_worker_newbank_direct_{operation}_replicas`
+- **Direct Canary**: `fts_live_worker_newbank_direct_{operation}_canary_replicas`
+- **Direct Baseline**: `fts_live_worker_newbank_direct_{operation}_baseline_replicas`
+
+### Worker Arguments Patterns:
+- **Core Initiate**: `newbank::initiate_transfer`
+- **Core Check**: `newbank::check_transfer_status`
+- **UPI Initiate**: `newbank::upi::initiate_transfer`
+- **UPI Check**: `newbank::upi::check_transfer_status`
+- **IMPS Initiate**: `newbank::imps::initiate_transfer`
+- **IMPS Check**: `newbank::imps::check_transfer_status`
+- **NEFT Initiate**: `newbank::neft::initiate_transfer`
+- **NEFT Check**: `newbank::neft::check_transfer_status`
+- **RTGS Initiate**: `newbank::rtgs::initiate_transfer`
+- **RTGS Check**: `newbank::rtgs::check_transfer_status`
+- **Direct UPI Initiate**: `newbank::direct::upi::initiate_transfer`
+- **Direct UPI Check**: `newbank::direct::upi::check_transfer_status`
+- **Direct IMPS Initiate**: `newbank::direct::imps::initiate_transfer`
+- **Direct IMPS Check**: `newbank::direct::imps::check_transfer_status`
+- **Direct NEFT Initiate**: `newbank::direct::neft::initiate_transfer`
+- **Direct NEFT Check**: `newbank::direct::neft::check_transfer_status`
+- **Direct RTGS Initiate**: `newbank::direct::rtgs::initiate_transfer`
+- **Direct RTGS Check**: `newbank::direct::rtgs::check_transfer_status`
+
+## Template Replacement Rules
+
+When generating templates for a new bank, replace:
+1. **Bank Name**: `idfc` → `newbank` (actual bank name in lowercase)
+2. **Variable Names**: `fts_live_worker_idfc_*` → `fts_live_worker_newbank_*`
+3. **Worker Args**: `idfc::*` → `newbank::*`
+4. **Labels/Names**: All references to bank name in metadata and selectors
+
+## Canary/Baseline Additions
+
+Each template file includes conditional canary and baseline deployments:
+- **Canary**: Adds `INSTANCE_TYPE: canary` and `CONCURRENCY: '1'` env vars
+- **Baseline**: Adds `INSTANCE_TYPE: baseline` and `CONCURRENCY: '1'` env vars
+- **Resource Limits**: Uses `fts_canary_baseline_cpu_requests` and `fts_canary_baseline_memory_requests`
+- **Config Maps**: Canary uses `fts-app-config-canary`, baseline uses `fts-app-config`
+
+## File Generation Priority
+
+1. **Core Operations** (initiate_transfer, check_transfer_status) - Essential
+2. **UPI Operations** - Most common payment method
+3. **IMPS Operations** - Immediate payment service
+4. **NEFT Operations** - National electronic funds transfer
+5. **RTGS Operations** - Real-time gross settlement
+6. **Direct Operations** - Bank-specific direct API integrations
+
+## Key Points:
+- All deployments are conditional on `{{ if .Values.canary_baseline_enable }}`
+- Each file contains 1 main + 2 conditional deployments (canary/baseline)
+- Worker arguments determine the queue and processing logic
+- Resource requests/limits are templated for flexibility
+- Prometheus annotations are included for monitoring
+- Anti-affinity rules prevent multiple pods on same node
+
+## Template Replacement:
+- `newbank` → actual bank name (lowercase)
+- Example: For Bank of Maharashtra → `bom`
+

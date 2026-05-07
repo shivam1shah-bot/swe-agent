@@ -1,0 +1,39 @@
+name: RZP Code Review Suite
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+      - converted_to_draft
+      - labeled
+      - unlabeled
+      - review_requested
+      - review_request_removed
+      - edited
+      - locked
+      - unlocked
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+  pull_request_review_comment:
+    types: [created, edited, deleted]
+  issue_comment:
+    types: [created, edited, deleted]
+  merge_group: {}
+  repository_dispatch: {}
+  workflow_dispatch: {}
+  schedule:
+    - cron: "0 3 * * *"
+  push: {}
+concurrency:
+  group: ${{ github.repository }}-${{ github.event.pull_request.number || github.head_ref || github.sha }}-${{ github.workflow }}
+  cancel-in-progress: true
+jobs:
+  rCoRe:
+    # Skip bot-triggered runs to prevent feedback loops
+    if: github.actor != 'rzp-code-review[bot]' && github.actor != 'github-actions[bot]'
+    uses: razorpay/actions/.github/workflows/rcore-suite.yml@master
+    with:
+      runner_name: ${{ vars.RCORE_RUNNER_NAME || 'self-hosted' }}
+    secrets: inherit

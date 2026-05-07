@@ -1,0 +1,43 @@
+# SWE Agent Webhook Receiver - lightweight event ingestion service
+
+FROM harbor.razorpay.com/razorpay/rzp-docker-image-inventory-multi-arch:rzp-golden-image-base-python-3.13-alpine3.22
+
+WORKDIR /app
+
+# Copy slim requirements (not the full requirements.txt — no AI/ML/GitHub deps needed)
+COPY requirements.webhook_receiver.txt .
+
+# Install minimal system dependencies (no Claude Code, Go, or npm needed)
+RUN apk update && apk add --no-cache \
+    curl \
+    ca-certificates \
+    bash
+
+# Install uv for faster Python dependency installs
+# Note: --insecure flag is needed due to corporate SSL/TLS interception (MITM proxy)
+# that re-signs certificates with Razorpay's CA, which isn't in Alpine's trust store
+RUN curl -LsSf --insecure https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:${PATH}"
+
+# Install only webhook receiver dependencies
+RUN uv pip install --system -r requirements.webhook_receiver.txt
+
+# Copy application code
+COPY . .
+
+# Set environment variables
+ENV SRC_DIR=app
+ENV LOG_DIR=app/tmp/logs
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV TZ=Asia/Kolkata
+
+# Service-specific configuration
+ENV APP_NAME=swe-agent-webhook-receiver
+
+# Expose the webhook receiver port
+EXPOSE 8004
+
+# Startup command
+CMD ["python", "commands/webhook_receiver.py"]

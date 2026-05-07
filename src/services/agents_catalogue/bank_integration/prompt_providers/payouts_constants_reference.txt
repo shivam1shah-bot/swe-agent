@@ -1,0 +1,32 @@
+PAYOUTS SERVICE - Constants File Reference
+==========================================
+
+FILE: payouts/internal/app/common/appConstants/constants.go
+
+PURPOSE: Add bank constant definition for new bank integration
+
+PATTERN: Add new bank constant after RBL and before CITI
+
+REFERENCE STRUCTURE:
+```go
+// supported channels
+AXIS             = "axis"
+YESBANK          = "yesbank"
+ICICI            = "icici"
+RBL              = "rbl"
+[NEW_BANK]       = "[new_bank_lowercase]"  // ← INSERT HERE
+CITI             = "citi"
+M2P              = "m2p"
+RZPX             = "rzpx"
+```
+
+EXAMPLE INSERTION FOR DEFAULTBANK:
+```go
+DEFAULTBANK      = "defaultbank"
+```
+
+INSERTION POINT: After RBL constant, before CITI constant
+INDENTATION: Use tabs (same as existing constants)
+FORMATTING: Align with existing constants using proper spacing
+
+This follows the same pattern as other bank constant definitions in the payouts service.

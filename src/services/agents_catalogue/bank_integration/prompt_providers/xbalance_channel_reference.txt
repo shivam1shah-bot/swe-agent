@@ -1,0 +1,66 @@
+X-Balance Service - Channel Enum Integration Reference
+=======================================================
+
+FILE: x-balances/internal/enum/channel/channel.go
+
+This file defines the channel enum for all supported banks. To add a new bank:
+
+REFERENCE PATTERN (Based on existing banks: RBL, AXIS, ICICI, YESBANK, IDFC):
+
+1. ADD NEW BANK CONSTANT:
+```go
+const (
+	// RBL bank as channel
+	RBL Type = iota + 1
+	// AXIS bank as channel  
+	AXIS
+	// ICICI bank as channel
+	ICICI
+	// YESBANK bank as channel
+	YESBANK
+	// IDFC bank as channel
+	IDFC
+	// NEWBANK bank as channel
+	NEWBANK  // Add after existing banks with next sequential number
+)
+```
+
+2. UPDATE toString MAP:
+```go
+var toString = map[Type]string{
+	RBL:     "rbl",
+	AXIS:    "axis", 
+	ICICI:   "icici",
+	YESBANK: "yesbank",
+	IDFC:    "idfc",
+	NEWBANK: "newbank",  // Add mapping to lowercase bank name
+}
+```
+
+3. UPDATE fromString MAP:
+```go
+var fromString = map[string]Type{
+	"rbl":     RBL,
+	"axis":    AXIS,
+	"icici":   ICICI, 
+	"yesbank": YESBANK,
+	"idfc":    IDFC,
+	"newbank": NEWBANK,  // Add reverse mapping from string to type
+}
+```
+
+INTEGRATION POINTS:
+- Used by transformer factory to identify bank type
+- Used by rate limiter configuration
+- Used by job queue naming
+- Used by metrics and logging
+
+EXAMPLE FOR BANK "SBI":
+- Constant: SBI
+- toString: "sbi" 
+- fromString: "sbi" → SBI
+
+VALIDATION:
+- Bank name must be consistent across all components
+- Use lowercase for string representations
+- Use UPPERCASE for constant names

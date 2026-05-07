@@ -1,0 +1,55 @@
+PAYOUTS ACCOUNTS REFERENCE - internal/app/common/appConstants/accounts.go
+
+REQUIRED MODIFICATIONS FOR BANK INTEGRATION:
+
+FILE: payouts/internal/app/common/appConstants/accounts.go
+
+1. ADD VIRTUAL ACCOUNT PREFIXES TO PrefixToIfscMappingForVirtualAccounts MAP:
+   LOCATION: var PrefixToIfscMappingForVirtualAccounts = map[string]string{
+   PATTERN: Follow RBL pattern - add multiple prefix entries pointing to BankIdentifier[BANKNAME]
+   
+   EXAMPLE ENTRIES (following RBL pattern):
+   ```go
+   var PrefixToIfscMappingForVirtualAccounts = map[string]string{
+       "222333": BankIdentifier[YESBANK],
+       "787878": BankIdentifier[YESBANK], 
+       "456456": BankIdentifier[YESBANK],
+       "2233":   BankIdentifier[ICICI],
+       "2244":   BankIdentifier[ICICI],
+       "5656":   BankIdentifier[ICICI],
+       "3434":   BankIdentifier[ICICI],
+       "2224":   BankIdentifier[RBL],        // <-- REFERENCE PATTERN
+       "2223":   BankIdentifier[RBL],        // <-- REFERENCE PATTERN  
+       "567890": BankIdentifier[RBL],        // <-- REFERENCE PATTERN
+       "1111":   BankIdentifier[NEWBANK],    // <-- ADD SIMILAR ENTRIES
+       "2222":   BankIdentifier[NEWBANK],    // <-- ADD SIMILAR ENTRIES
+       "3333":   BankIdentifier[NEWBANK],    // <-- ADD SIMILAR ENTRIES
+   }
+   ```
+
+2. ADD IFSC CODE TO BankIdentifier MAP:
+   LOCATION: var BankIdentifier = map[string]string{
+   PATTERN: Follow RBL pattern - add bank constant mapping to IFSC code
+   
+   EXAMPLE ENTRY (following RBL pattern):
+   ```go
+   var BankIdentifier = map[string]string{
+       YESBANK: "YESB0CMSNOC",
+       ICICI:   "ICIC0000104", 
+       RBL:     "RATN0VAAPIS",        // <-- REFERENCE PATTERN
+       NEWBANK: "NEWB0000001",        // <-- ADD SIMILAR ENTRY
+   }
+   ```
+
+CRITICAL REQUIREMENTS:
+- Use bank constant (UPPERCASE) as map key
+- Provide real IFSC code for the bank 
+- Add multiple virtual account prefixes (3-5 entries recommended)
+- Maintain map syntax and formatting
+- Position entries after existing banks
+
+PURPOSE:
+These mappings enable:
+- Virtual account prefix routing to correct bank
+- IFSC code resolution for bank operations
+- Proper fund account validation and processing

@@ -1,0 +1,84 @@
+## FTS internal/transfer/attempt_processor.go Reference
+
+### 1. Add case to getTaskNameForDispatchTransfer function after IDFC
+```go
+case channel.IDFC:
+    // [existing IDFC logic...]
+    
+case channel.NEWBANK:
+    // Fetch account type and mode for segregating task names based on them
+    accountType := processor.sourceAccount.GetAccountType()
+    attemptMode := processor.attempt.Mode
+    attemptMozartIdentifier := processor.sourceAccount.GetMozartIdentifier()
+
+    if accountType == account.TypeDirect {
+
+        if strings.EqualFold(attemptMode, ModeUPI) && strings.EqualFold(attemptMozartIdentifier, config.ChannelVersionV1) {
+
+            highVolumeConfig, highVolumeConfigPresent := config.GetConfig().HighVolume.Allow[channel.NEWBANK][ModeUPI][config.ChannelVersionV1]
+
+            if highVolumeConfigPresent && utils.InSlice(processor.attempt.MerchantID, highVolumeConfig.MerchantList) {
+                return utils.ScopedTaskName(constants.InitiateTransfer, processor.attempt.Channel, processor.attempt.Mode, constants.HighVolume)
+            }
+        }
+        return utils.ScopedTaskName(constants.InitiateTransfer, processor.attempt.Channel, constants.ScopeDirect, processor.attempt.Mode)
+
+    }
+
+    // for payroll we have a separate VA, so separate workers are configured for it
+    if utils.InSlice(attemptMode, []string{ModeNEFT, ModeRTGS, ModeIFT, ModeIMPS}) {
+        payrollMidList := config.GetConfig().PayrollMidDetails.MerchantList
+        if utils.InSlice(processor.attempt.MerchantID, payrollMidList) {
+            return utils.ScopedTaskName(constants.InitiateTransfer, processor.attempt.Channel, processor.attempt.Mode, constants.PayrollIdentifier)
+        }
+    }
+
+    scopedTaskName = utils.ScopedTaskName(constants.InitiateTransfer, processor.attempt.Channel, processor.attempt.Mode)
+```
+
+### 2. Add condition to dispatchForStatusCheck function after IDFC
+```go
+if processor.attempt.Channel == channel.IDFC {
+    // [existing IDFC logic...]
+}
+
+if processor.attempt.Channel == channel.NEWBANK {
+
+    // Fetch account type for segregating task names based on them
+    accountType := processor.sourceAccount.GetAccountType()
+    attemptMode := processor.attempt.Mode
+    attemptMozartIdentifier := processor.sourceAccount.GetMozartIdentifier()
+
+    if accountType == account.TypeDirect {
+        queueName = utils.ScopedTaskName(constants.CheckTransferStatus, processor.attempt.Channel, constants.ScopeDirect, processor.attempt.Mode)
+
+        if strings.EqualFold(attemptMode, ModeUPI) && strings.EqualFold(attemptMozartIdentifier, config.ChannelVersionV1) {
+
+            highVolumeConfig, highVolumeConfigPresent := config.GetConfig().HighVolume.Allow[channel.NEWBANK][ModeUPI][config.ChannelVersionV1]
+
+            if highVolumeConfigPresent && utils.InSlice(processor.attempt.MerchantID, highVolumeConfig.MerchantList) {
+                queueName = utils.ScopedTaskName(constants.CheckTransferStatus, processor.attempt.Channel, processor.attempt.Mode, constants.HighVolume)
+            }
+
+        }
+
+    } else {
+        queueName = utils.ScopedTaskName(constants.CheckTransferStatus, processor.attempt.Channel, processor.attempt.Mode)
+        // for payroll we have a separate VA, so separate workers are configured for it
+        if utils.InSlice(processor.attempt.Mode, []string{ModeNEFT, ModeRTGS, ModeIFT, ModeIMPS}) {
+            payrollMidList := config.GetConfig().PayrollMidDetails.MerchantList
+            if utils.InSlice(processor.attempt.MerchantID, payrollMidList) {
+                // override queue name for payroll
+                queueName = utils.ScopedTaskName(constants.CheckTransferStatus, processor.attempt.Channel, processor.attempt.Mode, constants.PayrollIdentifier)
+            }
+        }
+    }
+}
+```
+
+### Pattern Notes:
+- Replace "NEWBANK" with actual bank name (uppercase)
+- Copy exact logic from IDFC patterns
+- Supports high volume UPI transactions
+- Handles payroll account routing
+- Maintains direct account vs regular account segregation

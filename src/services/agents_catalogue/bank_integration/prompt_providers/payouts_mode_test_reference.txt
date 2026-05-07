@@ -1,0 +1,82 @@
+PAYOUTS MODE TEST REFERENCE - internal/app/payouts/mode_test.go
+
+REQUIRED MODIFICATIONS FOR BANK INTEGRATION:
+
+FILE: payouts/internal/app/payouts/mode_test.go
+
+ADD TEST CASES TO TestValidateChannelAndModeForPayoutsForDirectAccount FUNCTION:
+LOCATION: func TestValidateChannelAndModeForPayoutsForDirectAccount(t *testing.T)
+PATTERN: Add validation test cases for new bank (following YESBANK pattern)
+
+REFERENCE PATTERN (YESBANK):
+```go
+func TestValidateChannelAndModeForPayoutsForDirectAccount(t *testing.T) {
+    err := payouts.ValidateChannelAndModeForPayouts(appConstants.RBL, appConstants.BANK_ACCOUNT, appConstants.NEFT, payouts.Direct, appConstants.CountryCodeIndia)
+    assert.Nil(t, err)
+
+    err = payouts.ValidateChannelAndModeForPayouts(appConstants.YESBANK, appConstants.BANK_ACCOUNT, appConstants.IMPS, payouts.Direct, appConstants.CountryCodeIndia)  // <-- REFERENCE PATTERN
+    assert.Nil(t, err)
+
+    err = payouts.ValidateChannelAndModeForPayouts(appConstants.YESBANK, appConstants.BANK_ACCOUNT, appConstants.NEFT, payouts.Direct, appConstants.CountryCodeIndia)  // <-- REFERENCE PATTERN
+    assert.Nil(t, err)
+
+    err = payouts.ValidateChannelAndModeForPayouts(appConstants.YESBANK, appConstants.BANK_ACCOUNT, appConstants.RTGS, payouts.Direct, appConstants.CountryCodeIndia)  // <-- REFERENCE PATTERN
+    assert.Nil(t, err)
+
+    err = payouts.ValidateChannelAndModeForPayouts(appConstants.YESBANK, appConstants.CARD, appConstants.IMPS, payouts.Direct, appConstants.CountryCodeIndia)      // <-- REFERENCE PATTERN
+    assert.Nil(t, err)
+
+    err = payouts.ValidateChannelAndModeForPayouts(appConstants.YESBANK, appConstants.CARD, appConstants.NEFT, payouts.Direct, appConstants.CountryCodeIndia)      // <-- REFERENCE PATTERN
+    assert.Nil(t, err)
+
+    err = payouts.ValidateChannelAndModeForPayouts(appConstants.YESBANK, appConstants.CARD, appConstants.UPI, payouts.Direct, appConstants.CountryCodeIndia)       // <-- REFERENCE PATTERN
+    assert.Nil(t, err)
+
+    err = payouts.ValidateChannelAndModeForPayouts(appConstants.YESBANK, appConstants.VPA, appConstants.UPI, payouts.Direct, appConstants.CountryCodeIndia)        // <-- REFERENCE PATTERN
+    assert.Nil(t, err)
+}
+```
+
+EXAMPLE NEW TEST CASES (following YESBANK pattern):
+```go
+// ADD THESE TEST CASES FOR NEW BANK:
+err = payouts.ValidateChannelAndModeForPayouts(appConstants.NEWBANK, appConstants.BANK_ACCOUNT, appConstants.IMPS, payouts.Direct, appConstants.CountryCodeIndia)
+assert.Nil(t, err)
+
+err = payouts.ValidateChannelAndModeForPayouts(appConstants.NEWBANK, appConstants.BANK_ACCOUNT, appConstants.NEFT, payouts.Direct, appConstants.CountryCodeIndia)  
+assert.Nil(t, err)
+
+err = payouts.ValidateChannelAndModeForPayouts(appConstants.NEWBANK, appConstants.BANK_ACCOUNT, appConstants.RTGS, payouts.Direct, appConstants.CountryCodeIndia)
+assert.Nil(t, err)
+
+err = payouts.ValidateChannelAndModeForPayouts(appConstants.NEWBANK, appConstants.BANK_ACCOUNT, appConstants.IFT, payouts.Direct, appConstants.CountryCodeIndia)
+assert.Nil(t, err)
+
+err = payouts.ValidateChannelAndModeForPayouts(appConstants.NEWBANK, appConstants.CARD, appConstants.IMPS, payouts.Direct, appConstants.CountryCodeIndia)
+assert.Nil(t, err)
+
+err = payouts.ValidateChannelAndModeForPayouts(appConstants.NEWBANK, appConstants.CARD, appConstants.NEFT, payouts.Direct, appConstants.CountryCodeIndia)
+assert.Nil(t, err)
+
+err = payouts.ValidateChannelAndModeForPayouts(appConstants.NEWBANK, appConstants.CARD, appConstants.UPI, payouts.Direct, appConstants.CountryCodeIndia)
+assert.Nil(t, err)
+
+err = payouts.ValidateChannelAndModeForPayouts(appConstants.NEWBANK, appConstants.VPA, appConstants.UPI, payouts.Direct, appConstants.CountryCodeIndia)
+assert.Nil(t, err)
+```
+
+CRITICAL REQUIREMENTS:
+- Add test cases before the closing brace of the function
+- Test all supported account types: BANK_ACCOUNT, CARD, VPA
+- Test all supported modes for each account type
+- Use payouts.Direct for account type parameter
+- Use appConstants.CountryCodeIndia for country parameter
+- Each test should assert.Nil(t, err) for successful validation
+- Follow exact function call pattern and parameter order
+
+PURPOSE:
+These test cases ensure:
+- Channel and mode validation works correctly for the new bank
+- All account type and mode combinations are properly supported
+- Direct account type routing is validated
+- Payouts validation logic handles the new bank correctly

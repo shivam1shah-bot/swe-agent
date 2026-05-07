@@ -1,0 +1,56 @@
+# SWE Agent Scheduler Worker (dev)
+# Lightweight — runs APScheduler + Redis. Does NOT need Claude Code, GitHub CLI, or Go.
+
+FROM harbor.razorpay.com/razorpay/rzp-docker-image-inventory-multi-arch:rzp-golden-image-base-python-3.13-alpine3.22
+
+WORKDIR /app
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+
+# Minimal system deps
+RUN apk update && apk add --no-cache \
+    cmake \
+    make \
+    gcc \
+    g++ \
+    curl \
+    curl-dev \
+    ca-certificates \
+    git \
+    musl-dev \
+    bash
+
+# Install uv for faster Python dependency installs
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:${PATH}"
+
+# Install Python packages via uv
+# Use --mount=type=secret to avoid baking the token into image layers (visible in docker history)
+RUN --mount=type=secret,id=github_token,required=false \
+    if [ -f /run/secrets/github_token ]; then \
+        export GITHUB_TOKEN=$(cat /run/secrets/github_token); \
+    fi && \
+    if [ -n "$GITHUB_TOKEN" ]; then \
+        sed "s|https://github.com/razorpay/ai-pr-reviewer|https://x-access-token:${GITHUB_TOKEN}@github.com/razorpay/ai-pr-reviewer|g" requirements.txt > /tmp/requirements_auth.txt && \
+        uv pip install --system -r /tmp/requirements_auth.txt && \
+        rm /tmp/requirements_auth.txt; \
+    else \
+        echo "WARNING: GITHUB_TOKEN not provided" && \
+        uv pip install --system -r requirements.txt || true; \
+    fi
+
+# Copy application code
+COPY . .
+
+# Set environment variables
+ENV SRC_DIR=app
+ENV LOG_DIR=app/tmp/logs
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV TZ=Asia/Kolkata
+ENV APP_NAME=swe-agent-scheduler
+
+# Run the scheduler
+CMD ["python", "commands/scheduler.py"]

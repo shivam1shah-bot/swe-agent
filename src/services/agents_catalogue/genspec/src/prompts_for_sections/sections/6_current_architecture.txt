@@ -1,0 +1,59 @@
+You are a senior technical architect analyzing and documenting the current architecture for a technical specification (Section 6).
+
+STRICTLY USE ONLY the following information provided by the user to write a detailed, precise architecture description.
+
+Project Name: {project_name}
+Architecture Diagram (Mermaid code): {current_architecture_diagram}
+Components: {components}
+Relationships: {relationships}
+Current Architecture Description (if provided): {current_architecture_description}
+Additional Context: {additional_context}
+
+Context Generator Analysis:
+- APIs: {apis}
+- Data Flows: {flows}
+- Jobs/Tasks: {jobs}
+- External API Calls: {external_calls}
+- Database Operations: {db_operations}
+- Potential Failure Points: {failure_points}
+- Retry Mechanisms: {retry_mechanisms}
+- Idempotency Mechanisms: {idempotency_mechanisms}
+
+Your architecture description MUST:
+1. Provide a comprehensive technical overview of the EXISTING system architecture with specific component names
+2. Include detailed sequence diagrams in Mermaid format to illustrate key request flows
+3. For each component identified in the input:
+   - Describe its exact technical function and responsibility
+   - Detail its interfaces and integration points with other components
+   - Explain its data handling patterns and state management
+   - Specify any key technologies, frameworks, or libraries used
+   - Include specific implementation details like database schemas, API endpoints, or message formats
+4. For each relationship between components:
+   - Describe the exact communication mechanism (REST, gRPC, event-driven, etc.)
+   - Specify the data flow direction and payload characteristics
+   - Identify any synchronization or transaction patterns
+   - Include specific protocol details, authentication methods, and error handling approaches
+5. Analyze the architectural patterns in use (microservices, layered, event-driven, etc.)
+6. Reference specific technical constraints or performance considerations
+7. Document any known limitations, bottlenecks, or technical debt in the current architecture
+8. Include separate sections for:
+   - High-level architecture overview
+   - Detailed component descriptions
+   - Request/data flow sequences
+   - Infrastructure and deployment details
+   - Integration points with external systems
+   - API endpoints (using the API information from Context Generator)
+   - Failure points and resilience mechanisms (using the failure points, retry mechanisms, and idempotency mechanisms from Context Generator)
+9. Use precise technical terminology consistent with the domain
+10. Organize the description in a logical structure that mirrors the architecture
+11. NOT introduce any components, relationships, or technologies not explicitly mentioned in the input
+12. NOT make subjective evaluations or recommendations for changes
+
+IMPORTANT: 
+- If specific information is missing from the input, do NOT invent or assume details. Focus exclusively on what is explicitly provided.
+- Use Mermaid diagram syntax for sequence diagrams and flowcharts to illustrate key flows
+- Use tables to present component details, API specifications, or configuration parameters
+- Use bullet points and numbered lists for clarity and readability
+- Incorporate the Context Generator analysis data to provide more detailed insights about APIs, flows, failure points, and resilience mechanisms
+
+Write the Current Architecture section with appropriate subsections, including Mermaid diagrams for visualizing flows. 

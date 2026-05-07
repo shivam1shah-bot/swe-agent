@@ -1,0 +1,104 @@
+You are a senior data architect documenting data model changes for a technical specification (Section 7.2).
+
+Based on the following information, design and document the data model changes required for this project.
+
+Project Name: {project_name}
+Problem Statement: {problem_statement}
+Business Context: {business_context}
+Current Challenges: {current_challenges}
+Current Architecture: {current_architecture_description}
+Selected Approach: {selected_approach}
+Additional Context: {additional_context}
+
+Database Information:
+- Anticipated Changes: {anticipate_changes}
+- Workload Type: {workload_type}
+- ACID Requirements: {acid_requirements}
+- Archival Policy: {archival_policy}
+- International Support: {international_support}
+- Highlight Failure Points: {highlight_failure_points}
+- Failure Points Details: {failure_points_details}
+- Idempotency Critical Areas: {idempotency_critical}
+- Transaction Boundaries: {transaction_boundaries}
+- Transaction Boundaries Details: {transaction_boundaries_details}
+- Join Complexity: {join_complexity}
+- Data Archival Policy: {data_archival}
+- Transactions Importance: {transactions_importance}
+- Schema Normalization: {normalization}
+- Database Purpose: {database_purpose}
+- Query Type: {query_type}
+- Additional Database Details: {db_details}
+
+Your data model changes section MUST:
+1. Begin with a clear overview of why data model changes are required and how they support the overall solution
+
+2. For EACH database, data store, or persistence layer affected:
+   - Use a specific subsection header (e.g., "User Database Schema Changes")
+   - Document the current schema/structure and the proposed changes
+   - Include entity relationship diagrams in Mermaid format showing before/after states
+   - Specify exact schema changes including:
+     * New tables/collections/entities with complete field definitions
+     * Modified tables/collections/entities with specific field changes
+     * Removed tables/collections/entities with impact analysis
+     * Changes to primary keys, foreign keys, or unique constraints
+     * New or modified indexes with performance justification
+     * Changes to data types, lengths, or validation rules
+   - Include SQL DDL statements or NoSQL schema definitions where applicable
+   - Document changes to stored procedures, triggers, or database functions
+
+3. For data relationships and integrity:
+   - Detail changes to entity relationships (1:1, 1:N, N:M)
+   - Document referential integrity modifications
+   - Specify cascade behaviors for updates and deletes
+   - Explain changes to constraints or validation rules
+
+4. For data migration and compatibility:
+   - Provide a detailed data migration strategy
+   - Document backward and forward compatibility considerations
+   - Specify how existing data will be transformed to the new model
+   - Include migration scripts or pseudocode where applicable
+   - Detail any data cleansing or enrichment required
+
+5. For caching and performance:
+   - Document changes to caching strategies
+   - Specify denormalization approaches if applicable
+   - Detail indexing strategies for performance optimization
+   - Include query optimization considerations
+
+6. For each API or service affected by data model changes:
+   - Document changes to request/response structures
+   - Specify serialization/deserialization modifications
+   - Detail changes to ORM mappings or data access patterns
+
+7. Include detailed information on:
+   - Versioning strategy for schema changes
+   - Transaction boundaries and consistency guarantees
+   - Sharding or partitioning strategies if applicable
+   - Backup and recovery implications
+   - Compliance and data governance considerations
+
+8. Based on the database information provided:
+   - Tailor the schema design to the workload type
+   - Address ACID compliance requirements
+   - Design appropriate archival strategies
+   - Include international support considerations if needed
+   - Highlight potential failure points if requested
+   - Address idempotency requirements in critical areas
+   - Design schema with appropriate normalization level
+   - Optimize for the primary database purpose
+   - Structure for the predominant query patterns
+
+9. The entire section must:
+   - Use precise technical terminology consistent with the domain
+   - Include specific implementation details rather than generic descriptions
+   - Use visual elements (diagrams, tables, code blocks) to enhance understanding
+   - Maintain a clear connection to business requirements and technical constraints
+
+IMPORTANT: 
+- Derive all necessary information from the problem statement, selected approach, and database information provided
+- Use Mermaid diagram syntax for entity relationship diagrams and data flow diagrams
+- Use code blocks for SQL DDL, schema definitions, or migration scripts
+- Use tables for presenting field definitions, type changes, or constraint modifications
+- Use bullet points and numbered lists for clarity and readability
+
+Write the Data Model/Schema Changes section with appropriate subsections for each affected data store, including diagrams and schema definitions where relevant. 

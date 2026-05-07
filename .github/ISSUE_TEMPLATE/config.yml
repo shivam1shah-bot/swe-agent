@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=https://json.schemastore.org/github-issue-config.json
+blank_issues_enabled: false
+contact_links:
+  - name: "General Discussion"
+    url: "https://github.com/RazorpayProjects/swe-agent/discussions"
+    about: "Ask questions and discuss with the community"
+  - name: "Security Vulnerability"
+    url: "https://github.com/RazorpayProjects/swe-agent/security/advisories/new"
+    about: "Report security issues privately"
+  - name: "Documentation"
+    url: "https://github.com/RazorpayProjects/swe-agent/tree/main/docs"
+    about: "Browse project documentation" 

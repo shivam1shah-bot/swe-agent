@@ -1,0 +1,51 @@
+## FTS internal/channel/channel.go Reference
+
+### 1. Add Bank Constant after IDFC
+```go
+IDFC       = "IDFC"
+NEWBANK    = "NEWBANK"  // Replace NEWBANK with actual bank name
+```
+
+### 2. Add to channels slice after IDFC
+```go
+channels = []string{
+    // ... existing channels
+    IDFC,
+    NEWBANK,  // Add after IDFC
+}
+```
+
+### 3. Add to multiAccountRoutingSupportedChannels after IDFC
+```go
+multiAccountRoutingSupportedChannels = []string{
+    // ... existing channels
+    IDFC,
+    NEWBANK,  // Add after IDFC
+}
+```
+
+### 4. Add to allowedModesForChannels map after IDFC
+```go
+allowedModesForChannels = map[string][]string{
+    // ... existing mappings
+    IDFC:    {common.ModeIMPS, common.ModeNEFT, common.ModeIFT, common.ModeRTGS, common.ModeUPI},
+    NEWBANK: {common.ModeIMPS, common.ModeNEFT, common.ModeIFT, common.ModeRTGS, common.ModeUPI},
+}
+```
+
+### 5. Add case to GetApiConfig switch after IDFC
+```go
+switch channel {
+// ... existing cases
+case IDFC:
+    return Channels.IDFC, true
+case NEWBANK:
+    return Channels.NEWBANK, true
+}
+```
+
+### Pattern Notes:
+- Replace "NEWBANK" with actual bank name (uppercase)
+- Follow exact same indentation and formatting as IDFC
+- Keep all payment modes: IMPS, NEFT, IFT, RTGS, UPI
+- Add entries after IDFC to maintain alphabetical ordering

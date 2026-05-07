@@ -1,0 +1,191 @@
+X-Balance Service - Balance Fetch Job Integration Reference
+==========================================================
+
+DIRECTORY: x-balances/internal/job/balanceFetch/BANKNAME/
+
+The job implementation handles asynchronous balance fetch operations through a queue system.
+
+REQUIRED FILES:
+1. balance_fetch.go - Main job implementation
+2. balance_fetch_test.go - Unit tests
+
+=== FILE: balance_fetch.go ===
+
+REFERENCE PATTERN (Based on axis implementation):
+
+```go
+package BANKNAME
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"log"
+	"time"
+
+	"github.com/razorpay/x-balances/internal/balance_fetch"
+	"github.com/razorpay/x-balances/internal/balance_fetch/models"
+	"github.com/razorpay/x-balances/internal/job"
+	"github.com/razorpay/x-balances/internal/metrics"
+	"github.com/razorpay/x-balances/pkg/bootstrapWorker"
+	"github.com/razorpay/x-balances/pkg/env"
+	pkglog "github.com/razorpay/x-balances/pkg/log"
+
+	"github.com/razorpay/x-balances/pkg/worker"
+)
+
+// JobConfig is the configuration for the job
+var JobConfig = worker.Job{
+	QueueName:         fmt.Sprintf("%s-x-balances-BANKNAME-balance-update-live", env.New()),
+	PriorityQueueName: fmt.Sprintf("%s-x-balances-BANKNAME-balance-update-live", env.New()),
+	Name:              "balance_fetch_BANKNAME_worker",
+	MaxRetries:        1,
+	Timeout:           60 * time.Second,
+}
+var balanceFetchService balance_fetch.Service
+
+// Initialise registers the job with the worker
+func Initialise() {
+
+	balanceFetchJob := &Job{
+		Base: job.NewBase(context.Background(), JobConfig),
+	}
+
+	if err := bootstrapWorker.
+		Worker.
+		Register(balanceFetchJob, balanceFetchJob.Constructor); err != nil {
+		log.Fatal(err)
+	}
+}
+
+// Job is the job for fetching balance for account
+type Job struct {
+	job.Base
+	payload models.Request
+}
+
+// Constructor is the constructor for the job
+func (j *Job) Constructor(msg string) (worker.IJob, error) {
+	var payloadStruct models.Request
+	if err := json.Unmarshal([]byte(msg), &payloadStruct); err != nil {
+		return nil, err
+	}
+
+	jsonPayload, iErr := json.Marshal(payloadStruct)
+	if iErr != nil {
+		return nil, iErr
+	}
+	jobInstance := worker.Job{
+		QueueName:         JobConfig.QueueName,
+		PriorityQueueName: JobConfig.PriorityQueueName,
+		Name:              JobConfig.Name,
+		MaxRetries:        JobConfig.MaxRetries,
+		Timeout:           JobConfig.Timeout,
+		JSONPayload:       string(jsonPayload),
+	}
+	return &Job{
+		Base:    job.NewBase(context.Background(), jobInstance),
+		payload: payloadStruct,
+	}, nil
+}
+
+// NewJob creates a new job
+func NewJob(ctx context.Context, payload models.Request) *Job {
+	return &Job{
+		Base:    job.NewBase(ctx, JobConfig),
+		payload: payload,
+	}
+}
+
+// Handle handler for the job
+func (j *Job) Handle(ctx context.Context) error {
+	request := j.payload
+	startTime := time.Now()
+	request.RequestType = "async"
+	_, iErr := balanceFetchService.FetchBalance(ctx, request)
+	if iErr != nil {
+		// Error is already reported via iErr.Report(ctx), no need for additional logging
+		_ = iErr.Report(ctx)
+	}
+
+	// Single consolidated log with essential information
+	endTime := time.Now()
+	duration := endTime.Sub(startTime).Milliseconds()
+
+	// Record metric for timing instead of logging it
+	metrics.Core().GatewayBalanceFetchLatencyUpdate(
+		"false", // Default to non-priority
+		"BANKNAME_UPPER", // Use uppercase bank name for metrics
+		float64(duration))
+
+	// Single structured log with all necessary information
+	pkglog.Debugf(ctx, pkglog.BANKNAMEFetchBalanceWorkerTimeTaken, // Define this constant
+		"merchant_id", j.payload.MerchantID,
+		"channel", "BANKNAME_UPPER",
+		"success", iErr == nil,
+		"duration_ms", duration)
+
+	//// We don't want to return error from the job since we don't want to requeue the message
+	//// passively, it would be picked in subsequent runs of the cron
+	return nil
+
+}
+
+// RegisterHandler registers the balance fetch service
+func RegisterHandler(service balance_fetch.Service) {
+	balanceFetchService = service
+}
+```
+
+=== FILE: balance_fetch_test.go ===
+
+```go
+package BANKNAME
+
+import (
+	"testing"
+	// Add test imports and implementation
+)
+
+// Add comprehensive unit tests for:
+// - Job constructor
+// - Handle method
+// - Error scenarios
+// - Metrics recording
+// - Service registration
+```
+
+QUEUE NAMING CONVENTION:
+- Pattern: "{env}-x-balances-{bank}-balance-update-live"
+- Examples: 
+  - "prod-x-balances-sbi-balance-update-live"
+  - "staging-x-balances-hdfc-balance-update-live"
+
+JOB CONFIGURATION:
+- MaxRetries: 1 (standard across all banks)
+- Timeout: 60 seconds (standard, can be adjusted per bank needs)
+- RequestType: "async" (for asynchronous processing)
+
+METRICS AND LOGGING:
+- Gateway name: Use UPPERCASE bank name for consistency
+- Log constant: Define in pkglog package (e.g., pkglog.SBIFetchBalanceWorkerTimeTaken)
+- Metrics: Use metrics.Core().GatewayBalanceFetchLatencyUpdate()
+
+INTEGRATION POINTS:
+1. Queue names must be unique per bank
+2. Worker name must be unique: "balance_fetch_{bank}_worker"
+3. Log constants must be defined in pkg/log/code.go
+4. Metrics names must use uppercase bank names
+5. Service registration happens in main.go files
+
+EXAMPLE FOR BANK "SBI":
+- QueueName: "prod-x-balances-sbi-balance-update-live"  
+- Worker name: "balance_fetch_sbi_worker"
+- Metrics channel: "SBI"
+- Log constant: pkglog.SBIFetchBalanceWorkerTimeTaken
+
+VALIDATION:
+- Test job initialization and registration
+- Verify queue names are environment-specific
+- Check timeout and retry configurations
+- Test error handling and metrics recording

@@ -1,0 +1,191 @@
+TERMINALS VALIDATOR REFERENCE - internal/gateway_credentials/validator.go
+
+REQUIRED MODIFICATIONS FOR BANK INTEGRATION:
+
+FILE: terminals/internal/gateway_credentials/validator.go
+
+PURPOSE: Add new bank gateway credential validation rules, switch case, and validation function
+
+🔥 CRITICAL: This file contains 3 MANDATORY modifications that must be completed for terminals credential validation to work.
+
+INTEGRATION POINTS:
+
+## 1. GATEWAY CREDENTIAL RULES MAP (Line ~203)
+LOCATION: var gatewayCredentialRulesByGateway = map[string]govalidator.MapData{
+REFERENCE PATTERN: Line 203-206 - "fts_idfc" entry
+INSTRUCTION: Add new bank credential rules following exact same pattern
+
+REFERENCE CODE:
+```go
+"fts_idfc": {
+    "org_id":  []string{"required", "len:14", "alpha_num"},
+    "gateway": []string{"required", "gateway"},
+},
+```
+
+EXAMPLE FOR NEW BANK:
+```go
+"fts_idfc": {
+    "org_id":  []string{"required", "len:14", "alpha_num"}, 
+    "gateway": []string{"required", "gateway"},
+},
+"fts_newbank": {  // Add this section for new bank
+    "org_id":  []string{"required", "len:14", "alpha_num"},
+    "gateway": []string{"required", "gateway"},
+},
+```
+
+REPLACE PATTERN:
+- Replace "newbank" with actual bank name in lowercase
+- Maintain exact validation rules: org_id (14 chars, alphanumeric), gateway (required)
+- Ensure proper map entry formatting with commas
+
+## 2. VALIDATION SWITCH CASE (Line ~425)
+LOCATION: func ValidateGatewayCredential(dao *daos.GatewayCredential) switch statement
+REFERENCE PATTERN: Line 425-427 - gateway.FtsIDFC case
+INSTRUCTION: Add new bank case to validation switch statement
+
+REFERENCE CODE:
+```go
+case gateway.FtsIDFC:
+    err = ValidateFtsIDFCGatewayCredential(dao)
+    break
+```
+
+EXAMPLE FOR NEW BANK:
+```go
+case gateway.FtsIDFC:
+    err = ValidateFtsIDFCGatewayCredential(dao)
+    break
+case gateway.FtsNewBank:  // Add this case for new bank
+    err = ValidateFtsNewBankGatewayCredential(dao)
+    break
+```
+
+REPLACE PATTERN:
+- Replace "NewBank" with actual bank name in PascalCase
+- Follow exact function naming convention: ValidateFts{BankName}GatewayCredential
+- Maintain proper case statement formatting with break
+
+## 3. VALIDATION FUNCTION (Line ~997)
+LOCATION: After existing validation functions, before end of file
+REFERENCE PATTERN: Line 997-1010 - ValidateFtsIDFCGatewayCredential function
+INSTRUCTION: Create new validation function following exact same pattern
+
+REFERENCE CODE:
+```go
+func ValidateFtsIDFCGatewayCredential(dao *daos.GatewayCredential) *rzpError.Error {
+    rules := govalidator.MapData{
+        "org_id":  []string{"required", "len:14", "alpha_num"},
+        "gateway": []string{"required", "gateway"},
+    }
+
+    err := custom_validator.RunRulesOnDao(&rules, dao)
+
+    if err != nil {
+        return err
+    }
+
+    return nil
+}
+```
+
+EXAMPLE FOR NEW BANK:
+```go
+func ValidateFtsIDFCGatewayCredential(dao *daos.GatewayCredential) *rzpError.Error {
+    rules := govalidator.MapData{
+        "org_id":  []string{"required", "len:14", "alpha_num"},
+        "gateway": []string{"required", "gateway"},
+    }
+
+    err := custom_validator.RunRulesOnDao(&rules, dao)
+
+    if err != nil {
+        return err
+    }
+
+    return nil
+}
+
+// Add this function for new bank
+func ValidateFtsNewBankGatewayCredential(dao *daos.GatewayCredential) *rzpError.Error {
+    rules := govalidator.MapData{
+        "org_id":  []string{"required", "len:14", "alpha_num"},
+        "gateway": []string{"required", "gateway"},
+    }
+
+    err := custom_validator.RunRulesOnDao(&rules, dao)
+
+    if err != nil {
+        return err
+    }
+
+    return nil
+}
+```
+
+REPLACE PATTERN:
+- Replace "NewBank" with actual bank name in PascalCase
+- Use same validation rules as IDFC (org_id: 14 chars alphanumeric, gateway: required)
+- Maintain exact function signature and error handling
+
+## ADAPTATION REQUIREMENTS:
+
+1. **Naming Convention**: 
+   - Map key: "fts_" + lowercase bank name
+   - Constant reference: gateway.Fts{BankName} (PascalCase)
+   - Function name: ValidateFts{BankName}GatewayCredential
+
+2. **Validation Rules**: Use identical rules as IDFC:
+   - org_id: required, exactly 14 characters, alphanumeric only
+   - gateway: required, must be valid gateway string
+
+3. **Positioning**:
+   - Map entry: Add immediately after "fts_idfc" entry
+   - Switch case: Add immediately after gateway.FtsIDFC case
+   - Function: Add after ValidateFtsIDFCGatewayCredential function
+
+4. **Error Handling**: Maintain exact same pattern as IDFC validation
+
+## VERIFICATION STEPS:
+
+After all modifications, verify with grep commands:
+```bash
+# 1. Check map entry added
+grep -A 4 '"fts_.*"' internal/gateway_credentials/validator.go
+
+# 2. Check switch case added  
+grep -A 3 "case gateway\.Fts" internal/gateway_credentials/validator.go
+
+# 3. Check validation function added
+grep -A 15 "func ValidateFts.*GatewayCredential" internal/gateway_credentials/validator.go
+
+# 4. Verify all 3 locations have new bank
+grep -n "fts.*newbank\|Fts.*NewBank" internal/gateway_credentials/validator.go
+```
+
+## CRITICAL NOTES:
+
+- **EXACT VALIDATION RULES**: Must use identical org_id and gateway validation as IDFC
+- **CONSISTENT NAMING**: Same bank identifier must be used across all 3 locations
+- **PROPER FORMATTING**: Maintain Go syntax, indentation, and comma placement
+- **FUNCTION SIGNATURE**: Exact same parameters and return type as IDFC function
+- **ERROR HANDLING**: Use same custom_validator.RunRulesOnDao pattern
+
+## CONSEQUENCES OF INCORRECT MODIFICATION:
+
+❌ **Missing map entry**: Gateway credentials won't be validated, security risk
+❌ **Missing switch case**: Validation function won't be called, bypasses security
+❌ **Missing validation function**: Compilation error, service won't start
+❌ **Incorrect function name**: Switch case won't find function, runtime panic
+❌ **Wrong validation rules**: Incorrect credential validation, authentication failures
+
+SUCCESS CRITERIA:
+✅ New bank entry added to gatewayCredentialRulesByGateway map
+✅ New bank case added to ValidateGatewayCredential switch statement
+✅ New validation function created with proper naming and rules
+✅ All grep verification commands show new bank entries
+✅ Consistent naming used across all 3 locations
+✅ Identical validation rules to IDFC pattern
+
+This file is CRITICAL for terminals service credential security - all 3 modifications are mandatory.

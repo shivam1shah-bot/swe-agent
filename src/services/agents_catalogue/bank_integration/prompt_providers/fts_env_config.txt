@@ -1,0 +1,23 @@
+## FTS env.default.toml Configuration Reference
+
+### Worker Queue Mappings
+```toml
+[worker.mapping.task_name_mappings]
+"fts_initiate_transfer_idfc_imps" = "fts-transfer-initiate-idfc-imps"
+"fts_initiate_transfer_idfc_neft" = "fts-transfer-initiate-idfc-neft" 
+"fts_initiate_transfer_idfc_rtgs" = "fts-transfer-initiate-idfc-rtgs"
+"fts_initiate_transfer_idfc_upi" = "fts-transfer-initiate-idfc-upi"
+"fts_check_transfer_status_idfc_imps" = "fts-transfer-status-idfc-imps"
+"fts_check_transfer_status_idfc_neft" = "fts-transfer-status-idfc-neft"
+"fts_check_transfer_status_idfc_rtgs" = "fts-transfer-status-idfc-rtgs"
+"fts_check_transfer_status_idfc_upi" = "fts-transfer-status-idfc-upi"
+```
+
+### Task Consumption Configuration
+```toml
+[task_consumption.fts]
+"fts-transfer-initiate-idfc-imps" = { worker_count = 20, queue_type = "sqs" }
+"fts-transfer-initiate-idfc-neft" = { worker_count = 15, queue_type = "sqs" }
+"fts-transfer-initiate-idfc-rtgs" = { worker_count = 10, queue_type = "sqs" }
+"fts-transfer-initiate-idfc-upi" = { worker_count = 25, queue_type = "sqs" }
+```

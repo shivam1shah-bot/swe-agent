@@ -1,0 +1,236 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Repository Structure Rules
+
+## CRITICAL: Architecture Integrity
+**NEVER deviate from the established layered architecture without explicit approval**
+
+## Core Architecture Layers
+
+### 1. API Layer (`src/api/`)
+**Responsibility**: HTTP endpoints, request/response handling, dependency injection
+- **Routers** (`src/api/routers/`) - FastAPI route definitions
+- **Dependencies** (`src/api/dependencies.py`) - Dependency injection setup  
+- **Main API** (`src/api/api.py`) - FastAPI app configuration
+
+**Rules**:
+- ✅ Only handle HTTP concerns (routing, validation, serialization)
+- ✅ Use Pydantic models for request/response schemas
+- ✅ Delegate business logic to Service layer
+- ❌ NO database access or business logic in routers
+- ❌ NO direct repository calls from API layer
+
+### 2. Service Layer (`src/services/`)
+**Responsibility**: Business logic, orchestration, workflow coordination
+- **Base Service** (`src/services/base.py`) - Common service patterns
+- **Domain Services** - Task, Agents Catalogue, etc.
+
+**Rules**:
+- ✅ Contains ALL business logic and rules
+- ✅ Orchestrates repositories and providers
+- ✅ Handles transaction boundaries
+- ✅ Validates business rules
+- ❌ NO HTTP concerns (status codes, headers)
+- ❌ NO direct database queries
+
+### 3. Repository Layer (`src/repositories/`)
+**Responsibility**: Data access abstraction, CRUD operations
+- **Base Repository** (`src/repositories/base.py`) - Repository patterns
+- **Domain Repositories** - Task, Agents Catalogue repositories
+
+**Rules**:
+- ✅ Pure data access operations (CRUD)
+- ✅ Database query abstraction  
+- ✅ Data persistence patterns
+- ❌ NO business logic or validation
+- ❌ NO direct service calls
+
+### 4. Model Layer (`src/models/`)
+**Responsibility**: Data structures, entities, enums
+- **Base Models** (`src/models/base.py`) - SQLAlchemy base classes
+- **Domain Models** - Task, Workflow, etc.
+- **Enums** - Status enums, types
+
+**Rules**:
+- ✅ Data structure definitions only
+- ✅ SQLAlchemy models and relationships
+- ✅ Pydantic schemas for serialization
+- ❌ NO business logic methods
+- ❌ NO database operations
+
+### 5. Provider Layer (`src/providers/`)
+**Responsibility**: Infrastructure abstractions, external services
+- **Database** (`src/providers/database/`) - Database connections
+- **Cache** (`src/providers/cache/`) - Caching layer
+- **Logger** (`src/providers/logger/`) - Logging infrastructure
+- **Config** (`src/providers/config_loader/`) - Configuration management
+- **Worker** (`src/providers/worker/`) - Queue/worker management
+
+**Rules**:
+- ✅ Infrastructure concerns only
+- ✅ External service integrations
+- ✅ Configuration and setup
+- ❌ NO business logic
+- ❌ NO domain-specific operations
+
+## Specialized Layers
+
+### 6. Workflow Layer (`src/workflows/`)
+**Responsibility**: Workflow definitions, automation, orchestration
+- **Workflow Definitions** - Auto-docs, service onboarding, etc.
+- **Workflow Engine** - Execution and coordination
+
+**Rules**:
+- ✅ Workflow logic and steps
+- ✅ Multi-step process coordination
+- ✅ Integration between tools and services
+- ❌ NO direct database access
+- ❌ NO HTTP handling
+
+### 7. Tools Layer (`src/tools/`)
+**Responsibility**: Reusable utilities, agents, analysis tools
+- **Base Tool** (`src/tools/base.py`) - Tool abstractions
+- **Specific Tools** - Claude, autonomous agent, static analysis
+
+**Rules**:
+- ✅ Reusable, composable functionality
+- ✅ Agent and AI tool implementations
+- ✅ Analysis and processing utilities
+- ❌ NO workflow-specific logic
+- ❌ NO persistent state management
+
+### 8. Tasks Layer (`src/tasks/`)
+**Responsibility**: Task management, queue integration
+- **Service** (`src/tasks/service.py`) - Task coordination
+- **Queue Integration** (`src/tasks/queue_integration.py`) - Queue management
+
+**Rules**:
+- ✅ Task lifecycle management
+- ✅ Queue and worker integration
+- ✅ Task status and progress tracking
+- ❌ NO workflow definitions
+- ❌ NO tool implementation
+
+### 9. Worker Layer (`src/worker/`)
+**Responsibility**: Background processing, job execution
+- **Queue Manager** (`src/worker/queue_manager.py`) - Queue handling
+- **Worker** (`src/worker/worker.py`) - Job processing
+- **Tasks** (`src/worker/tasks.py`) - Background tasks
+
+**Rules**:
+- ✅ Background job processing
+- ✅ Queue management and coordination
+- ✅ Asynchronous task execution
+- ❌ NO API endpoints
+- ❌ NO workflow definitions
+
+## Supporting Components
+
+### 10. Migration Layer (`src/migrations/`)
+**Responsibility**: Database schema management
+- **Manager** (`src/migrations/manager.py`) - Migration coordination
+- **Scripts** (`src/migrations/scripts/`) - Migration files
+- **Seeds** (`src/migrations/seeds/`) - Data seeding
+
+**Rules**:
+- ✅ Database schema changes only
+- ✅ Data migration scripts
+- ✅ Seeding and initial data
+- ❌ NO business logic
+- ❌ NO API changes in migrations
+
+### 11. Utils Layer (`src/utils/`)
+**Responsibility**: Common utilities, helpers
+- **System utilities** - Logging, security, etc.
+- **Helper functions** - Cross-cutting concerns
+
+**Rules**:
+- ✅ Pure utility functions
+- ✅ Cross-cutting helper methods
+- ❌ NO domain-specific logic
+- ❌ NO stateful operations
+
+## Frontend & External
+
+### 12. UI Layer (`ui/`)
+**Responsibility**: React frontend application
+- **Components** (`ui/src/components/`) - React components
+- **Pages** (`ui/src/pages/`) - Application pages
+- **Services** (`ui/src/lib/`) - Frontend services
+
+**Rules**:
+- ✅ Frontend-only concerns
+- ✅ UI components and state management
+- ✅ API client integration
+- ❌ NO backend logic
+- ❌ NO direct database access
+
+### 13. Command Layer (`commands/`)
+**Responsibility**: CLI interfaces, scripts
+- **API** (`commands/api.py`) - API server startup
+- **Worker** (`commands/task_execution_worker.py`) - Worker processes
+
+**Rules**:
+- ✅ Command-line interfaces
+- ✅ Application bootstrapping
+- ❌ NO business logic
+- ❌ NO data operations
+
+### 14. Test Layer (`tests/`)
+**Responsibility**: Comprehensive testing
+- **Unit** (`tests/unit/`) - Isolated component tests
+- **Integration** (`tests/integration/`) - Cross-component tests
+- **E2E** (`tests/e2e/`) - End-to-end tests
+
+**Rules**:
+- ✅ Mirror source structure in test organization
+- ✅ Isolated, focused test cases
+- ✅ Test utilities in helpers/fixtures
+- ❌ NO production code in tests
+
+## Change Guidelines
+
+### When to Modify Each Layer:
+
+**API Changes** → `src/api/routers/` - Add new endpoints, modify request/response
+**Business Logic** → `src/services/` - Add features, modify workflows
+**Data Access** → `src/repositories/` - New queries, data operations
+**Data Models** → `src/models/` - Schema changes, new entities
+**Infrastructure** → `src/providers/` - External integrations, configurations
+**Workflows** → `src/workflows/` - Multi-step processes, automation
+**Tools** → `src/tools/` - Reusable utilities, AI agents
+**Background Jobs** → `src/worker/` - Async processing, queues
+**Database** → `src/migrations/` - Schema migrations, data updates
+
+### Cross-Layer Rules:
+- **Dependencies flow downward**: API → Service → Repository → Model
+- **NO circular dependencies** between layers
+- **Infrastructure providers** can be used by any layer above
+- **Utils** can be used by any layer
+- **Tests** mirror source structure exactly
+
+### File Naming:
+- Use **snake_case** for Python files
+- **Descriptive names** reflecting responsibility
+- **Group related files** in subdirectories
+- **Mirror domain structure** across layers
+
+### Import Management:
+- **Keep ALL imports at the top of the file** - imports should appear after module docstring and before any other code
+- **NEVER insert imports between functions or within function bodies** - this violates PEP 8 and degrades readability
+- **Group imports logically** - standard library first, third-party second, local imports last
+- **Use explicit import statements** - avoid wildcard imports (`from module import *`)
+- **Sort imports alphabetically** within each group for consistency
+
+## Violation Prevention:
+❌ **NO business logic in API routers**
+❌ **NO database queries in services** (use repositories)
+❌ **NO HTTP handling in services/repositories**
+❌ **NO cross-layer circular dependencies**
+❌ **NO domain logic in providers/utils**
+❌ **NO infrastructure concerns in business layers**
+
+**Always follow the established patterns - consistency is key!**

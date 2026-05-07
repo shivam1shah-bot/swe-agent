@@ -1,0 +1,167 @@
+X-Balance Service - Bank Integration Overview
+===========================================
+
+COMPLETE INTEGRATION CHECKLIST FOR NEW BANK
+
+The x-balance service requires integration in 7 key areas to add a new bank.
+This document provides an overview of the integration points and dependencies.
+
+=== INTEGRATION ARCHITECTURE ===
+
+1. CHANNEL ENUM (Foundation Layer)
+   - Defines bank constants and string mappings
+   - Used by all other components for bank identification
+   - FILE: internal/enum/channel/channel.go
+
+2. TRANSFORMER (Data Transformation Layer)  
+   - Converts between internal and Mozart request/response formats
+   - Bank-specific credential handling and validation
+   - DIRECTORY: internal/transformer/mozart/BANKNAME/
+
+3. FACTORY REGISTRATION (Dependency Injection)
+   - Maps bank names to transformer instances  
+   - Central registry for transformer lookup
+   - FILE: internal/transformer/mozart/factory/transformer.go
+
+4. RATE LIMITER (Traffic Control)
+   - Controls API call frequency per bank
+   - Prevents exceeding bank API limits
+   - FILE: internal/constant/constant.go
+
+5. BALANCE FETCH JOB (Async Processing)
+   - Handles queued balance fetch requests
+   - Bank-specific queue configuration
+   - DIRECTORY: internal/job/balanceFetch/BANKNAME/
+
+6. WORKER REGISTRATION (Runtime Integration)
+   - Registers jobs with worker framework
+   - Injects services into job handlers
+   - FILES: cmd/worker/main.go, cmd/server/main.go
+
+7. LOGGING CONSTANTS (Observability)
+   - Defines bank-specific log message constants
+   - FILE: pkg/log/code.go (if custom log messages needed)
+
+=== INTEGRATION FLOW ===
+
+Request Flow:
+1. Balance fetch request → Balance Fetch Service
+2. Service uses Factory → Get bank-specific Transformer  
+3. Transformer converts → Mozart request format
+4. Rate Limiter checks → API call frequency limits
+5. Mozart Service → External bank API call
+6. Response flows back through Transformer → Standard format
+
+Async Flow:  
+1. Job queued → Bank-specific queue
+2. Worker picks up → Balance Fetch Job
+3. Job handler uses → Balance Fetch Service
+4. Same flow as synchronous request
+
+=== DEPENDENCIES BETWEEN COMPONENTS ===
+
+Channel Enum ← Used by all other components
+     ↓
+Factory (uses enum strings) → Transformer (uses enum constants)
+     ↓                              ↓  
+Rate Limiter (uses enum strings)    Job (uses transformer via service)
+     ↓                              ↓
+Balance Fetch Service ← Worker Registration
+     ↓
+Mozart Service → External Bank API
+
+=== FILE CREATION ORDER ===
+
+Recommended implementation order:
+
+1. Channel Enum (foundation)
+2. Transformer Models (request/response structures)
+3. Transformer Implementation (core logic)
+4. Transformer Tests (validation)
+5. Factory Registration (wiring)
+6. Rate Limiter Configuration (traffic control)
+7. Job Implementation (async processing)
+8. Job Tests (validation)
+9. Worker Registration (runtime integration)
+10. End-to-end testing
+
+=== VALIDATION STEPS ===
+
+After implementing all components:
+
+□ Channel enum has bank constant and mappings
+□ Transformer package compiles without errors  
+□ Transformer tests pass
+□ Factory returns correct transformer for bank
+□ Rate limiter has bank configuration
+□ Job package compiles and registers successfully
+□ Worker starts without errors
+□ End-to-end balance fetch works
+□ Async job processing works
+□ Error handling works correctly
+□ Metrics and logging work
+□ Rate limiting works as expected
+
+=== TESTING STRATEGY ===
+
+Unit Tests:
+- Transformer request/response conversion
+- Validation logic for bank-specific requirements  
+- Job constructor and handler methods
+- Factory transformer lookup
+
+Integration Tests:
+- End-to-end balance fetch flow
+- Queue job processing
+- Rate limiter behavior
+- Error scenarios (invalid credentials, network issues)
+
+Load Tests:
+- Rate limiter effectiveness
+- Concurrent request handling
+- Queue processing capacity  
+- Performance under load
+
+=== COMMON PITFALLS ===
+
+1. Inconsistent naming between components
+2. Missing imports in factory
+3. Incorrect queue naming conventions
+4. Rate limits too high/low for bank API
+5. Missing error handling in transformer
+6. Incorrect credentials structure
+7. Worker registration order issues
+8. Missing validation for required fields
+
+=== MONITORING AND OBSERVABILITY ===
+
+Metrics to Monitor:
+- Balance fetch success/error rates per bank
+- API response times per bank
+- Rate limit hit rates
+- Queue processing latency
+- Worker job success rates
+
+Logs to Check:  
+- Transformer validation errors
+- Mozart API errors per bank
+- Rate limiter rejections
+- Job processing failures
+- Worker startup confirmation
+
+Alerts to Configure:
+- High error rates for new bank
+- Rate limit threshold breaches  
+- Queue backup/delay issues
+- Worker job failures
+- API timeout increases
+
+=== ROLLBACK STRATEGY ===
+
+If issues occur after deployment:
+1. Remove worker registration (stops job processing)
+2. Remove rate limiter config (stops API calls)
+3. Remove factory case (prevents transformer lookup)  
+4. Remove channel enum (fallback to unsupported)
+
+This allows gradual rollback without affecting other banks.

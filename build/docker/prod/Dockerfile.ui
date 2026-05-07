@@ -1,0 +1,117 @@
+# Production Dockerfile for the SWE Agent UI service
+# Multi-stage build: builder stage contains dev deps (esbuild, typescript, etc.)
+# which are discarded — final image has no dev deps, no esbuild Go binaries.
+#
+# YARN 4 MIGRATION NOTES:
+# - 'yarn install --production' is DEPRECATED in Yarn 4 (error: YN0050)
+# - Use 'yarn workspaces focus --all --production' instead
+# - Builder stage: 'yarn install --immutable' (full install with lockfile verification)
+# - Production stage: 'yarn workspaces focus --all --production' (prod deps only)
+# - Smoke tests run in both dev and prod to catch issues early
+
+# Stage 1: Builder
+# Installs ALL dependencies (dev + prod) needed for the Vite build
+FROM c.rzp.io/razorpay/rzp-docker-image-inventory-multi-arch:rzp-golden-image-base-node-24-alpine3.23 AS builder
+
+WORKDIR /app
+
+# Copy Yarn 4 configuration first (required for corepack/yarn 4)
+COPY ui/.yarnrc.yml ui/package.json ui/yarn.lock ./
+COPY ui/.yarn/releases ./.yarn/releases
+
+# Enable Corepack for Yarn 4 support
+RUN corepack enable
+
+# Ensure .yarn directory exists and is writable
+RUN mkdir -p .yarn && chmod -R 755 .yarn
+
+# Use the local Yarn version specified in .yarnrc.yml
+RUN yarn --version
+
+# Install ALL dependencies (including dev dependencies for build)
+# --immutable: fails if yarn.lock would be modified (reproducible builds)
+# --network-timeout: 5 min timeout for slow networks
+# Generates .yarn/install-state.gz for dependency tracking
+RUN for i in 1 2 3; do \
+        yarn install --immutable --network-timeout 300000 && break || \
+        (echo "Attempt $i failed, clearing cache and retrying..." && yarn cache clean && sleep 5); \
+    done && \
+    ls -la .yarn/ && \
+    ls -la node_modules/ | head -5 && \
+    test -f .yarn/install-state.gz || (echo "ERROR: install-state.gz not generated" && exit 1)
+
+# Copy source code
+COPY ui/src ./src
+COPY ui/environments ./environments
+COPY ui/public ./public
+COPY ui/index.html ./
+COPY ui/vite.config.ts ./
+COPY ui/server.js ./
+COPY ui/tsconfig*.json ./
+COPY ui/tailwind.config.js ./
+COPY ui/postcss.config.js ./
+COPY ui/eslint.config.js ./
+
+# Set build arguments and environment variables
+ARG GIT_COMMIT_HASH
+ENV GIT_COMMIT_HASH=${GIT_COMMIT_HASH}
+ENV APP_NAME=swe-agent-ui
+ENV TZ=Asia/Kolkata
+
+# Build the application for production (creates dist/)
+RUN yarn build
+
+# Stage 2: Production runtime
+# Fresh image with only production dependencies
+FROM c.rzp.io/razorpay/rzp-docker-image-inventory-multi-arch:rzp-golden-image-base-node-24-alpine3.23
+
+WORKDIR /app
+
+# Copy Yarn 4 configuration for installing production deps
+COPY ui/.yarnrc.yml ui/package.json ui/yarn.lock ./
+COPY ui/.yarn/releases ./.yarn/releases
+
+# Enable Corepack for Yarn 4 support
+RUN corepack enable && \
+    mkdir -p .yarn && chmod -R 755 .yarn
+
+# Install only production dependencies using Yarn 4 workspaces focus
+# This is the Yarn 4 replacement for deprecated 'yarn install --production'
+# --all: installs entire project (not just current workspace)
+# --production: omits dev dependencies (only express, pino, dotenv, etc.)
+# Note: workspaces focus doesn't support --immutable or --network-timeout flags
+RUN for i in 1 2 3; do \
+        yarn workspaces focus --all --production && break || \
+        (echo "Attempt $i failed, clearing cache and retrying..." && yarn cache clean && sleep 5); \
+    done && \
+    yarn cache clean
+
+# Copy only built artifacts from builder stage (no dev deps)
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/server.js ./server.js
+COPY --from=builder /app/environments ./environments
+
+# Set runtime environment
+ARG GIT_COMMIT_HASH
+ENV GIT_COMMIT_HASH=${GIT_COMMIT_HASH}
+ENV APP_NAME=swe-agent-ui
+ENV NODE_ENV=production
+ENV TZ=Asia/Kolkata
+
+# SMOKE TESTS: Verify production image is functional
+# Tests: runtime deps exist (express, pino, dotenv), build artifacts present,
+#        server starts and responds to /health endpoint
+# Build fails if any test fails - prevents deploying broken images
+COPY build/docker/scripts/smoke-test-ui.sh /tmp/smoke-test-ui.sh
+RUN chmod +x /tmp/smoke-test-ui.sh && /tmp/smoke-test-ui.sh && rm /tmp/smoke-test-ui.sh
+
+# Expose the UI port
+EXPOSE 8001
+
+# Health check for container orchestration (Kubernetes/Docker Swarm)
+# Checks /health endpoint every 30s, fails after 3 consecutive failures
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD node -e "const http=require('http'); http.get('http://localhost:8001/health',(r)=>{process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"
+
+# Command to serve the production build using Express with runtime config
+CMD ["node", "server.js"]

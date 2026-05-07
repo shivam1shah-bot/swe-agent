@@ -1,0 +1,228 @@
+X-Balance Service - Mozart Transformer Integration Reference  
+============================================================
+
+DIRECTORY: x-balances/internal/transformer/mozart/BANKNAME/
+
+The transformer package implements the MozartTransformer interface to convert between 
+internal request/response formats and bank-specific Mozart formats.
+
+REQUIRED FILES:
+1. bankname_transformer.go - Main transformer implementation
+2. bankname_transformer_test.go - Unit tests
+3. models/request.go - Bank-specific request models  
+4. models/response.go - Bank-specific response models
+
+=== FILE: bankname_transformer.go ===
+
+REFERENCE PATTERN (Based on axis implementation):
+
+```go
+package bankname
+
+import (
+	"encoding/json"
+	"strconv"
+
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/razorpay/goutils/errors"
+
+	"github.com/razorpay/x-balances/internal/errors/errcode"
+	"github.com/razorpay/x-balances/internal/errors/errtype"
+	"github.com/razorpay/x-balances/internal/gateway/banking_accounts"
+	mozart2 "github.com/razorpay/x-balances/internal/transformer/mozart"
+	"github.com/razorpay/x-balances/internal/transformer/mozart/bankname/models"
+	"github.com/razorpay/x-balances/pkg/utils/intutils"
+)
+
+// BankNameTransformer implements the Transformer interface for Bank BANKNAME
+type BankNameTransformer struct {}
+
+// NewBankNameTransformer returns a new instance of BankNameTransformer
+func NewBankNameTransformer() *BankNameTransformer {
+	return &BankNameTransformer{}
+}
+
+// TransformToRequest transforms the request to Bank's Mozart request format
+func (t *BankNameTransformer) TransformToRequest(
+	accountID string,
+	merchantID string, 
+	cred banking_accounts.FetchBankingCredsResponse) (
+	mozart2.Request,
+	*mozart2.RequestAttributes,
+	errors.IError) {
+	
+	if accountID == "" {
+		return mozart2.Request{}, nil, errtype.InternalServerError.
+			New(errcode.GatewayBadRequest)
+	}
+	
+	var credentials models.Credentials
+	if credentialsData, exists := cred.Data["credentials"]; exists {
+		credentialsJSON, err := json.Marshal(credentialsData)
+		if err != nil {
+			return mozart2.Request{}, nil, errtype.InternalServerError.New(errcode.MarshalError)
+		}
+		err = json.Unmarshal(credentialsJSON, &credentials)
+		if err != nil {
+			return mozart2.Request{}, nil, errtype.InternalServerError.New(errcode.UnmarshalError)
+		}
+	} else {
+		return mozart2.Request{}, nil, errtype.InternalServerError.New(errcode.UnmarshalError)
+	}
+	
+	mozartRequest := models.MozartBalanceFetchRequest{
+		SourceAccount: models.SourceAccount{
+			AccountNumber: accountID,
+			Credentials:   credentials,
+		},
+	}
+	
+	requestAttributes := getMozartAttributes()
+	err := ValidateRequest(mozartRequest)
+	if err != nil {
+		return mozart2.Request{}, nil, err.
+			WithInternalMetadata(map[string]string{
+				"merchant_id": merchantID,
+			})
+	}
+	
+	return mozart2.Request{Entities: mozartRequest}, &requestAttributes, nil
+}
+
+// TransformToResponse transforms Mozart's response into common fetch service response
+func (t *BankNameTransformer) TransformToResponse(response mozart2.Response) (
+	*mozart2.BalanceFetchResponse,
+	errors.IError) {
+	
+	jsonData, err := json.Marshal(response.Data)
+	if err != nil {
+		return nil, errtype.InternalServerError.
+			New(errcode.MarshalError).
+			Wrap(err)
+	}
+
+	var mozartResponse models.Data
+	err = json.Unmarshal(jsonData, &mozartResponse)
+	if err != nil {
+		return nil, errtype.InternalServerError.
+			New(errcode.UnmarshalError).
+			Wrap(err)
+	}
+
+	floatValue, err := strconv.ParseFloat(mozartResponse.AccountBalanceAmount, 64)
+	if err != nil {
+		return nil, errtype.InternalServerError.
+			New(errcode.ParseFloatError).
+			Wrap(err)
+	}
+
+	balanceInt, err := intutils.FormatAmount(floatValue)
+	if err != nil {
+		return nil, errtype.InternalServerError.
+			New(errcode.AmountConversionError).
+			Wrap(err)
+	}
+
+	return &mozart2.BalanceFetchResponse{
+		Amount: int64(balanceInt),
+	}, nil
+}
+
+func getMozartAttributes() mozart2.RequestAttributes {
+	return mozart2.RequestAttributes{
+		Namespace:                        mozart2.FTSNamespace,
+		Gateway:                          "bankname",  // Use lowercase bank name
+		Version:                          mozart2.VersionV1,
+		Action:                           mozart2.AccountBalanceAction,
+		UseMozartMappedInternalErrorCode: mozart2.UseMozartMappedInternalErrorCode,
+		Timeout:                          mozart2.Timeout,
+		ConnectTimeout:                   mozart2.ConnectTimeout,
+	}
+}
+
+// ValidateRequest validates that all required fields are present in the request
+func ValidateRequest(request models.MozartBalanceFetchRequest) errors.IError {
+	err := validation.ValidateStruct(&request,
+		validation.Field(&request.SourceAccount, validation.Required),
+	)
+	if err != nil {
+		return errtype.BadRequest.New(errcode.ValidationFailure).Wrap(err)
+	}
+
+	srcAccount := request.SourceAccount
+	err = validation.ValidateStruct(&srcAccount,
+		validation.Field(&srcAccount.AccountNumber, validation.Required),
+		validation.Field(&srcAccount.Credentials, validation.Required),
+	)
+	if err != nil {
+		return errtype.BadRequest.New(errcode.ValidationFailure).Wrap(err)
+	}
+
+	creds := srcAccount.Credentials
+	// Add bank-specific credential validation here
+	err = validation.ValidateStruct(&creds,
+		validation.Field(&creds.FieldName, validation.Required),
+		// Add other required fields based on bank requirements
+	)
+	if err != nil {
+		return errtype.BadRequest.New(errcode.ValidationFailure).Wrap(err)
+	}
+
+	return nil
+}
+```
+
+=== FILE: models/request.go ===
+
+```go
+package models
+
+// MozartBalanceFetchRequest is the request structure for fetching balance from Mozart
+type MozartBalanceFetchRequest struct {
+	SourceAccount SourceAccount `json:"source_account"`
+}
+
+// SourceAccount is the structure for source account
+type SourceAccount struct {
+	AccountNumber string      `json:"account_number"`
+	Credentials   Credentials `json:"credentials"`
+}
+
+// Credentials is the structure for credentials - CUSTOMIZE based on bank requirements
+type Credentials struct {
+	// Add bank-specific credential fields here
+	// Examples from different banks:
+	// EncryptionKey string `json:"encryptionKey" log:"-"`
+	// EncryptionIv  string `json:"encryptionIv" log:"-"`
+	// ClientID      string `json:"clientId" log:"-"`
+	// ClientSecret  string `json:"clientSecret" log:"-"`
+	// CorpCode      string `json:"corpCode"`
+}
+```
+
+=== FILE: models/response.go ===
+
+```go
+package models
+
+// Data struct is the response model for balance fetch - CUSTOMIZE based on bank response
+type Data struct {
+	Remarks              string `json:"remarks"`
+	AccountBalanceAmount string `json:"accountBalanceAmount"`  // Common field
+	Raw                  string `json:"_raw"`
+	BankStatusCode       string `json:"bank_status_code"`
+	// Add other bank-specific response fields
+}
+
+// Next struct is the response model for balance fetch
+type Next struct {
+	// Add fields if necessary
+}
+```
+
+INTEGRATION NOTES:
+- Gateway name in getMozartAttributes() must match bank name in factory
+- Credentials struct must match bank's authentication requirements
+- Response Data struct must match Mozart's response format for the bank
+- Validation should include all required fields for the specific bank
+- Error handling should use structured errors from errtype/errcode

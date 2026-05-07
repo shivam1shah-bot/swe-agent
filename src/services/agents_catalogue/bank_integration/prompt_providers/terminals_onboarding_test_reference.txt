@@ -1,0 +1,238 @@
+TERMINALS ONBOARDING TEST REFERENCE - slit/fts_newbank_onboarding_test.go
+
+REQUIRED FILE CREATION FOR BANK INTEGRATION:
+
+FILE: terminals/slit/fts_{newbank}_onboarding_test.go (NEW FILE TO CREATE)
+
+PURPOSE: Create comprehensive integration test suite for new bank onboarding functionality
+
+🔥 CRITICAL: This is a NEW FILE that must be created with complete test coverage for new bank onboarding.
+
+FILE TEMPLATE STRUCTURE:
+
+## COMPLETE FILE TEMPLATE:
+
+```go
+package slit
+
+import (
+	"fmt"
+	"net/http"
+	"os"
+	"testing"
+
+	"github.com/razorpay/goutils/itf"
+	"github.com/razorpay/goutils/itf/utilities/callservice"
+	"github.com/razorpay/goutils/itf/utilities/common"
+	"github.com/razorpay/terminals/internal/constants"
+	"github.com/razorpay/terminals/internal/contracts/v2/request"
+	"github.com/razorpay/terminals/slit/utils"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+)
+
+type FTSNewBankOnboardingSuite struct {
+	itf.Suite
+}
+
+func TestFTSNewBankOnboardingSuite(t *testing.T) {
+	suite.Run(t, &FTSNewBankOnboardingSuite{Suite: itf.NewSuite(itf.WithPriority(itf.PriorityP1))})
+}
+
+func (s *FTSNewBankOnboardingSuite) SetupSuite() {
+	itf.SetParallelFlag(false)
+	s.Suite.SetupSuite()
+}
+
+func (s *FTSNewBankOnboardingSuite) TearDownSuite() {
+}
+
+func (s *FTSNewBankOnboardingSuite) TestFTSNewBankTerminalCreationThroughV2() {
+	gatewayCreds := common.GetRandomString(14)
+
+	fmt.Println(gatewayCreds)
+
+	resp, err := callservice.CallService(callservice.RequestParams{
+		ServiceName:   callservice.Services.TerminalsLive,
+		AuthType:      callservice.Authorization.TerminalsTestApiUserAuth,
+		Method:        http.MethodPost,
+		Path:          "/v2/gateway_credentials",
+		RequestBody:   getFTSNewBankSuccessOnboardingRequest(),
+		CustomHeaders: map[string]string{"rzpctx-dev-serve-user": os.Getenv(constants.DevstackLabel)},
+	})
+	response := utils.GetResponse(resp.Body)
+	fmt.Println(response)
+
+	require.Nil(s.T(), err)
+	require.NotNil(s.T(), resp)
+	require.Equal(s.T(), http.StatusOK, resp.StatusCode)
+	require.NotNil(s.T(), response.Body.Data.(map[string]interface{})["id"])
+}
+
+func (s *FTSNewBankOnboardingSuite) TestFTSNewBankTerminalCreationFailureThroughV2() {
+	gatewayCreds := common.GetRandomString(17)
+
+	resp, err := callservice.CallService(callservice.RequestParams{
+		ServiceName:   callservice.Services.TerminalsLive,
+		AuthType:      callservice.Authorization.TerminalsTestApiUserAuth,
+		Method:        http.MethodPost,
+		Path:          "/v2/gateway_credentials",
+		RequestBody:   getFTSNewBankOnboardingRequest(gatewayCreds),
+		CustomHeaders: map[string]string{"rzpctx-dev-serve-user": os.Getenv(constants.DevstackLabel)},
+	})
+	response := utils.GetResponse(resp.Body)
+	fmt.Println(response)
+
+	require.Nil(s.T(), err)
+	require.Equal(s.T(), http.StatusBadRequest, resp.StatusCode)
+	expectedErrorMessage := `{
+  "gateway_credential_id": [
+    "The gateway_credential_id field must be length of 14"
+  ]
+}`
+	require.Equal(s.T(), expectedErrorMessage, response.Body.Error["description"])
+}
+
+func getFTSNewBankSuccessOnboardingRequest() request.GatewayCredential {
+	return request.GatewayCredential{
+		OrgId:    "10000000000000",
+		Gateway:  "fts_newbank",           // Replace with actual bank name
+		Acquirer: "newbank",               // Replace with actual bank name  
+		Identifiers: map[string]interface{}{
+			// Bank-specific identifiers - update based on actual bank requirements
+			"client_id":   "NEWBANK_CLIENT",
+			"user_id":     "NEWBANK_USER", 
+			"branch_code": "NEWBANK001",
+		},
+		Secrets: map[string]interface{}{
+			// Bank-specific secrets - update based on actual bank requirements
+			"api_secret": "NewBankSecretKeyForTestingPurposes123456789",
+		},
+	}
+}
+
+func getFTSNewBankOnboardingRequest(gatewayCreds string) request.GatewayCredential {
+	return request.GatewayCredential{
+		OrgId:               "10000000000000",
+		GatewayCredentialId: gatewayCreds,
+		Gateway:             "fts_newbank",           // Replace with actual bank name
+		Acquirer:            "newbank",               // Replace with actual bank name
+		Identifiers: map[string]interface{}{
+			// Bank-specific identifiers - update based on actual bank requirements
+			"client_id":   "NEWBANK_CLIENT",
+			"user_id":     "NEWBANK_USER",
+			"branch_code": "NEWBANK001", 
+		},
+		Secrets: map[string]interface{}{
+			// Bank-specific secrets - update based on actual bank requirements
+			"api_secret": "NewBankSecretKeyForTestingPurposes123456789",
+		},
+	}
+}
+```
+
+## ADAPTATION REQUIREMENTS:
+
+### 1. **File Naming**:
+- **File Name**: `fts_{bankname}_onboarding_test.go` (lowercase bank name)
+- **Example**: `fts_hdfc_onboarding_test.go`, `fts_sbi_onboarding_test.go`
+
+### 2. **Struct and Function Naming**:
+- **Suite Struct**: `FTS{BankName}OnboardingSuite` (PascalCase)
+- **Test Function**: `TestFTS{BankName}OnboardingSuite` (PascalCase)
+- **Test Methods**: `TestFTS{BankName}TerminalCreationThroughV2` (PascalCase)
+- **Helper Functions**: `getFTS{BankName}SuccessOnboardingRequest()` (PascalCase)
+
+### 3. **Gateway Configuration**:
+- **Gateway**: `"fts_" + lowercase bank name`
+- **Acquirer**: lowercase bank name
+- **Example**: `"fts_hdfc"` and `"hdfc"`
+
+### 4. **Bank-Specific Configuration**:
+Replace the IDFC-specific identifiers and secrets with appropriate values for the new bank:
+
+**IDFC Reference**:
+```go
+Identifiers: map[string]interface{}{
+    "GCIF":        "NODALT",
+    "user_id":     "1MAKER", 
+    "client_code": "4903API",
+},
+Secrets: map[string]interface{}{
+    "api_secret": "O6Gmbjncor2z4n7uzVFcRwMJ5EAyCcmr99WM9tcWrMjGqIhhDixzSOD0TAHz5CrM",
+},
+```
+
+**Template for New Bank** (customize based on actual bank requirements):
+```go
+Identifiers: map[string]interface{}{
+    "client_id":   "BANK_CLIENT_ID",
+    "user_id":     "BANK_USER_ID",
+    "branch_code": "BANK_BRANCH_CODE",
+    // Add other bank-specific identifiers as needed
+},
+Secrets: map[string]interface{}{
+    "api_secret": "BankSpecificSecretKeyForTesting",
+    // Add other bank-specific secrets as needed
+},
+```
+
+## STRUCTURE EXPLANATION:
+
+### **Test Suite Components**:
+
+1. **Success Test**: `TestFTSNewBankTerminalCreationThroughV2`
+   - Tests successful onboarding with valid 14-character gateway credentials
+   - Expects HTTP 200 response with valid ID
+
+2. **Failure Test**: `TestFTSNewBankTerminalCreationFailureThroughV2`
+   - Tests failure case with invalid 17-character gateway credentials
+   - Expects HTTP 400 response with specific error message
+
+3. **Helper Functions**:
+   - `getFTSNewBankSuccessOnboardingRequest()`: Creates valid request
+   - `getFTSNewBankOnboardingRequest(gatewayCreds)`: Creates request with custom creds
+
+## VERIFICATION STEPS:
+
+After creating the new test file, verify with these commands:
+```bash
+# 1. Check file was created with correct naming
+ls -la slit/fts_*_onboarding_test.go
+
+# 2. Verify all bank names are consistently updated
+grep -n "NewBank\|newbank" slit/fts_{bankname}_onboarding_test.go
+
+# 3. Check test structure is complete
+grep -E "func.*Test|func.*get" slit/fts_{bankname}_onboarding_test.go
+
+# 4. Validate Go syntax
+go vet slit/fts_{bankname}_onboarding_test.go
+```
+
+## CRITICAL NOTES:
+
+- **COMPLETE NEW FILE**: This is not a modification but a brand new file creation
+- **CONSISTENT NAMING**: All references to bank name must be consistent throughout
+- **BANK-SPECIFIC DATA**: Identifiers and secrets must be updated for actual bank requirements  
+- **TEST COVERAGE**: Both success and failure scenarios must be included
+- **PROPER IMPORTS**: All required imports must be maintained
+- **FILE LOCATION**: Must be created in `terminals/slit/` directory
+
+## CONSEQUENCES OF INCORRECT CREATION:
+
+❌ **Missing test file**: No integration test coverage for new bank onboarding
+❌ **Incorrect naming**: Tests won't run properly or will conflict with existing tests
+❌ **Wrong identifiers**: Tests will fail due to incorrect bank-specific data
+❌ **Syntax errors**: File won't compile, breaking test suite
+❌ **Missing test cases**: Incomplete coverage of onboarding scenarios
+
+SUCCESS CRITERIA:
+✅ New test file created with proper naming convention
+✅ All bank-specific references updated consistently
+✅ Both success and failure test cases implemented
+✅ Bank-appropriate identifiers and secrets configured  
+✅ File compiles without syntax errors
+✅ Tests can run and validate new bank onboarding functionality
+
+This file provides comprehensive integration test coverage for new bank onboarding in the terminals service.

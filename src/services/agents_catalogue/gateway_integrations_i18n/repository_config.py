@@ -1,0 +1,11 @@
+class RepositoryConfig:
+    """Configuration for repositories involved in gateway integration"""
+    TERMINALS = "https://github.com/razorpay/terminals"
+    ROUTER = "https://github.com/razorpay/router"
+    PG_ROUTER = "https://github.com/razorpay/pg-router"
+    NBPLUS = "https://github.com/razorpay/payments-nb-wallet"
+    MOZART = "https://github.com/razorpay/mozart"
+    INTEGRATIONS_GO = "https://github.com/razorpay/integrations-go"
+    TERRAFORM_KONG = "https://github.com/razorpay/terraform-kong"
+    PROTO = "https://github.com/razorpay/proto"
+    API = "https://github.com/razorpay/api"

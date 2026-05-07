@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vyom MCP Gateway Demo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: #0F172A;
+    color: #E2E8F0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  .demo-container {
+    width: 900px;
+    height: 560px;
+    border-radius: 16px;
+    border: 1px solid rgba(51, 65, 85, 0.6);
+    background: rgba(15, 23, 42, 0.7);
+    backdrop-filter: blur(12px);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+  }
+
+  .window-chrome {
+    height: 40px;
+    background: rgba(30, 41, 59, 0.8);
+    border-bottom: 1px solid rgba(51, 65, 85, 0.6);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 8px;
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-red { background: #EF4444; }
+  .dot-yellow { background: #EAB308; }
+  .dot-green { background: #22C55E; }
+
+  /* Canvas area */
+  .canvas {
+    width: 100%;
+    height: calc(100% - 40px);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Subtle grid background */
+  .canvas::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 1px 1px, rgba(51,65,85,0.3) 1px, transparent 0);
+    background-size: 32px 32px;
+    opacity: 0.5;
+  }
+
+  /* Radial glow behind center */
+  .center-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(59,130,246,0.12) 0%, transparent 70%);
+    pointer-events: none;
+    animation: glowPulse 4s ease-in-out infinite;
+  }
+  @keyframes glowPulse {
+    0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+  }
+
+  /* SVG connection lines */
+  .connections-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .conn-line {
+    stroke: rgba(59, 130, 246, 0.15);
+    stroke-width: 1.5;
+    fill: none;
+  }
+  .conn-pulse {
+    fill: none;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+    opacity: 0;
+  }
+  .conn-pulse.slack-p { stroke: #36C5F0; }
+  .conn-pulse.devrev-p { stroke: #0088FF; }
+  .conn-pulse.grafana-p { stroke: #F46800; }
+  .conn-pulse.blade-p { stroke: #06B6D4; }
+  .conn-pulse.memory-p { stroke: #A855F7; }
+  .conn-pulse.sequential-p { stroke: #22C55E; }
+
+  /* Center hub */
+  .center-hub {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    text-align: center;
+  }
+  .hub-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(6,182,212,0.2));
+    border: 2px solid rgba(59, 130, 246, 0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    position: relative;
+    box-shadow: 0 0 40px rgba(59, 130, 246, 0.15);
+  }
+  .hub-icon {
+    font-size: 28px;
+    margin-bottom: 2px;
+  }
+  .hub-label {
+    font-size: 11px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #3B82F6, #06B6D4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 0.5px;
+  }
+  .hub-sublabel {
+    font-size: 9px;
+    color: #94A3B8;
+    margin-top: 6px;
+  }
+
+  /* Orbit ring (decorative) */
+  .orbit-ring {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border-radius: 50%;
+    border: 1px dashed rgba(51, 65, 85, 0.3);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .orbit-1 {
+    width: 260px;
+    height: 260px;
+    transform: translate(-50%, -50%);
+  }
+  .orbit-2 {
+    width: 420px;
+    height: 420px;
+    transform: translate(-50%, -50%);
+  }
+
+  /* MCP nodes */
+  .mcp-node {
+    position: absolute;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    opacity: 0;
+    transform: scale(0.7);
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .mcp-node.visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  .node-icon-wrap {
+    width: 56px;
+    height: 56px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    position: relative;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+  .node-status {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #22C55E;
+    border: 2px solid #0F172A;
+  }
+
+  .node-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #E2E8F0;
+    white-space: nowrap;
+  }
+
+  .node-tools {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    justify-content: center;
+    max-width: 140px;
+  }
+  .node-tool-chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    padding: 2px 5px;
+    border-radius: 3px;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: all 0.3s ease;
+  }
+  .node-tool-chip.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Node colors */
+  .node-slack .node-icon-wrap { background: rgba(54, 197, 240, 0.1); }
+  .node-slack .node-tool-chip { background: rgba(54,197,240,0.1); color: #36C5F0; border: 1px solid rgba(54,197,240,0.2); }
+
+  .node-devrev .node-icon-wrap { background: rgba(0, 102, 255, 0.1); }
+  .node-devrev .node-tool-chip { background: rgba(0,136,255,0.1); color: #44AAFF; border: 1px solid rgba(0,136,255,0.2); }
+
+  .node-grafana .node-icon-wrap { background: rgba(244, 104, 0, 0.1); }
+  .node-grafana .node-tool-chip { background: rgba(244,104,0,0.1); color: #FF9944; border: 1px solid rgba(244,104,0,0.2); }
+
+  .node-blade .node-icon-wrap { background: rgba(6, 182, 212, 0.1); }
+  .node-blade .node-tool-chip { background: rgba(6,182,212,0.1); color: #06B6D4; border: 1px solid rgba(6,182,212,0.2); }
+
+  .node-memory .node-icon-wrap { background: rgba(168, 85, 247, 0.1); }
+  .node-memory .node-tool-chip { background: rgba(168,85,247,0.1); color: #C084FC; border: 1px solid rgba(168,85,247,0.2); }
+
+  .node-sequential .node-icon-wrap { background: rgba(34, 197, 94, 0.1); }
+  .node-sequential .node-tool-chip { background: rgba(34,197,94,0.1); color: #4ADE80; border: 1px solid rgba(34,197,94,0.2); }
+
+  /* Data packet animation along paths */
+  .data-packet {
+    r: 3;
+    opacity: 0;
+  }
+  .data-packet.slack-p { fill: #36C5F0; }
+  .data-packet.devrev-p { fill: #0088FF; }
+  .data-packet.grafana-p { fill: #F46800; }
+  .data-packet.blade-p { fill: #06B6D4; }
+  .data-packet.memory-p { fill: #A855F7; }
+  .data-packet.sequential-p { fill: #22C55E; }
+
+  /* Protocol label */
+  .protocol-label {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    color: #64748B;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    z-index: 20;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  .protocol-label.visible { opacity: 1; }
+  .protocol-bar {
+    width: 40px;
+    height: 1px;
+    background: rgba(100, 116, 139, 0.3);
+  }
+
+  /* Tool count badges */
+  .tool-count-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    font-size: 9px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    padding: 0 4px;
+    border: 2px solid #0F172A;
+    z-index: 2;
+  }
+  .node-slack .tool-count-badge { background: #36C5F0; }
+  .node-devrev .tool-count-badge { background: #0088FF; }
+  .node-grafana .tool-count-badge { background: #F46800; }
+  .node-blade .tool-count-badge { background: #06B6D4; }
+  .node-memory .tool-count-badge { background: #A855F7; }
+  .node-sequential .tool-count-badge { background: #22C55E; }
+</style>
+</head>
+<body>
+
+<div class="demo-container">
+  <div class="window-chrome">
+    <div class="dot dot-red"></div>
+    <div class="dot dot-yellow"></div>
+    <div class="dot dot-green"></div>
+  </div>
+
+  <div class="canvas">
+    <div class="center-glow"></div>
+    <div class="orbit-ring orbit-1"></div>
+    <div class="orbit-ring orbit-2"></div>
+
+    <!-- SVG connection lines -->
+    <svg class="connections-svg" viewBox="0 0 900 520">
+      <!-- Static lines from center (450,260) to each node -->
+      <line class="conn-line" x1="450" y1="260" x2="148" y2="100" />
+      <line class="conn-line" x1="450" y1="260" x2="450" y2="52" />
+      <line class="conn-line" x1="450" y1="260" x2="752" y2="100" />
+      <line class="conn-line" x1="450" y1="260" x2="148" y2="420" />
+      <line class="conn-line" x1="450" y1="260" x2="450" y2="468" />
+      <line class="conn-line" x1="450" y1="260" x2="752" y2="420" />
+
+      <!-- Animated pulse lines -->
+      <line class="conn-pulse slack-p" x1="450" y1="260" x2="148" y2="100" stroke-dasharray="8 16" stroke-dashoffset="0">
+        <animate attributeName="stroke-dashoffset" from="0" to="-24" dur="1.5s" repeatCount="indefinite" />
+        <animate attributeName="opacity" values="0;0.7;0.7;0" dur="3s" repeatCount="indefinite" />
+      </line>
+      <line class="conn-pulse devrev-p" x1="450" y1="260" x2="450" y2="52" stroke-dasharray="8 16" stroke-dashoffset="0">
+        <animate attributeName="stroke-dashoffset" from="0" to="-24" dur="1.8s" repeatCount="indefinite" />
+        <animate attributeName="opacity" values="0;0.7;0.7;0" dur="3.5s" repeatCount="indefinite" />
+      </line>
+      <line class="conn-pulse grafana-p" x1="450" y1="260" x2="752" y2="100" stroke-dasharray="8 16" stroke-dashoffset="0">
+        <animate attributeName="stroke-dashoffset" from="0" to="-24" dur="2s" repeatCount="indefinite" />
+        <animate attributeName="opacity" values="0;0.7;0.7;0" dur="4s" repeatCount="indefinite" />
+      </line>
+      <line class="conn-pulse blade-p" x1="450" y1="260" x2="148" y2="420" stroke-dasharray="8 16" stroke-dashoffset="0">
+        <animate attributeName="stroke-dashoffset" from="0" to="-24" dur="1.6s" repeatCount="indefinite" />
+        <animate attributeName="opacity" values="0;0.7;0.7;0" dur="3.2s" repeatCount="indefinite" />
+      </line>
+      <line class="conn-pulse memory-p" x1="450" y1="260" x2="450" y2="468" stroke-dasharray="8 16" stroke-dashoffset="0">
+        <animate attributeName="stroke-dashoffset" from="0" to="-24" dur="2.2s" repeatCount="indefinite" />
+        <animate attributeName="opacity" values="0;0.7;0.7;0" dur="4.2s" repeatCount="indefinite" />
+      </line>
+      <line class="conn-pulse sequential-p" x1="450" y1="260" x2="752" y2="420" stroke-dasharray="8 16" stroke-dashoffset="0">
+        <animate attributeName="stroke-dashoffset" from="0" to="-24" dur="1.4s" repeatCount="indefinite" />
+        <animate attributeName="opacity" values="0;0.7;0.7;0" dur="2.8s" repeatCount="indefinite" />
+      </line>
+
+      <!-- Data packets traveling along paths -->
+      <circle class="data-packet slack-p" cx="0" cy="0">
+        <animateMotion dur="2.5s" repeatCount="indefinite" path="M450,260 L148,100" />
+        <animate attributeName="opacity" values="0;0.9;0.9;0" dur="2.5s" repeatCount="indefinite" />
+      </circle>
+      <circle class="data-packet slack-p" cx="0" cy="0">
+        <animateMotion dur="2.5s" repeatCount="indefinite" path="M148,100 L450,260" begin="1.2s" />
+        <animate attributeName="opacity" values="0;0.9;0.9;0" dur="2.5s" repeatCount="indefinite" begin="1.2s" />
+      </circle>
+
+      <circle class="data-packet devrev-p" cx="0" cy="0">
+        <animateMotion dur="2s" repeatCount="indefinite" path="M450,260 L450,52" begin="0.5s" />
+        <animate attributeName="opacity" values="0;0.9;0.9;0" dur="2s" repeatCount="indefinite" begin="0.5s" />
+      </circle>
+      <circle class="data-packet devrev-p" cx="0" cy="0">
+        <animateMotion dur="2s" repeatCount="indefinite" path="M450,52 L450,260" begin="1.5s" />
+        <animate attributeName="opacity" values="0;0.9;0.9;0" dur="2s" repeatCount="indefinite" begin="1.5s" />
+      </circle>
+
+      <circle class="data-packet grafana-p" cx="0" cy="0">
+        <animateMotion dur="3s" repeatCount="indefinite" path="M450,260 L752,100" begin="0.3s" />
+        <animate attributeName="opacity" values="0;0.9;0.9;0" dur="3s" repeatCount="indefinite" begin="0.3s" />
+      </circle>
+      <circle class="data-packet grafana-p" cx="0" cy="0">
+        <animateMotion dur="3s" repeatCount="indefinite" path="M752,100 L450,260" begin="1.8s" />
+        <animate attributeName="opacity" values="0;0.9;0.9;0" dur="3s" repeatCount="indefinite" begin="1.8s" />
+      </circle>
+
+      <circle class="data-packet blade-p" cx="0" cy="0">
+        <animateMotion dur="2.8s" repeatCount="indefinite" path="M450,260 L148,420" begin="0.7s" />
+        <animate attributeName="opacity" values="0;0.9;0.9;0" dur="2.8s" repeatCount="indefinite" begin="0.7s" />
+      </circle>
+
+      <circle class="data-packet memory-p" cx="0" cy="0">
+        <animateMotion dur="2.2s" repeatCount="indefinite" path="M450,468 L450,260" begin="0.4s" />
+        <animate attributeName="opacity" values="0;0.9;0.9;0" dur="2.2s" repeatCount="indefinite" begin="0.4s" />
+      </circle>
+      <circle class="data-packet memory-p" cx="0" cy="0">
+        <animateMotion dur="2.2s" repeatCount="indefinite" path="M450,260 L450,468" begin="1.6s" />
+        <animate attributeName="opacity" values="0;0.9;0.9;0" dur="2.2s" repeatCount="indefinite" begin="1.6s" />
+      </circle>
+
+      <circle class="data-packet sequential-p" cx="0" cy="0">
+        <animateMotion dur="2.6s" repeatCount="indefinite" path="M752,420 L450,260" begin="0.9s" />
+        <animate attributeName="opacity" values="0;0.9;0.9;0" dur="2.6s" repeatCount="indefinite" begin="0.9s" />
+      </circle>
+    </svg>
+
+    <!-- Center Hub: Vyom Agent -->
+    <div class="center-hub">
+      <div class="hub-circle">
+        <div class="hub-icon">⚡</div>
+        <div class="hub-label">VYOM</div>
+      </div>
+      <div class="hub-sublabel">MCP Gateway</div>
+    </div>
+
+    <!-- MCP Nodes -->
+    <!-- Top-left: Slack -->
+    <div class="mcp-node node-slack" id="node-slack" style="left:88px; top:40px;">
+      <div class="node-icon-wrap">
+        💬
+        <div class="node-status"></div>
+        <div class="tool-count-badge">13</div>
+      </div>
+      <div class="node-label">Slack</div>
+      <div class="node-tools">
+        <div class="node-tool-chip" data-delay="0">post_message</div>
+        <div class="node-tool-chip" data-delay="1">search</div>
+        <div class="node-tool-chip" data-delay="2">summarise</div>
+      </div>
+    </div>
+
+    <!-- Top-center: DevRev -->
+    <div class="mcp-node node-devrev" id="node-devrev" style="left:393px; top:8px;">
+      <div class="node-icon-wrap">
+        📋
+        <div class="node-status"></div>
+        <div class="tool-count-badge">8</div>
+      </div>
+      <div class="node-label">DevRev</div>
+      <div class="node-tools">
+        <div class="node-tool-chip" data-delay="0">tickets</div>
+        <div class="node-tool-chip" data-delay="1">issues</div>
+        <div class="node-tool-chip" data-delay="2">incidents</div>
+      </div>
+    </div>
+
+    <!-- Top-right: Grafana -->
+    <div class="mcp-node node-grafana" id="node-grafana" style="left:692px; top:40px;">
+      <div class="node-icon-wrap">
+        📊
+        <div class="node-status"></div>
+        <div class="tool-count-badge">5</div>
+      </div>
+      <div class="node-label">Grafana</div>
+      <div class="node-tools">
+        <div class="node-tool-chip" data-delay="0">query_logs</div>
+        <div class="node-tool-chip" data-delay="1">dashboards</div>
+        <div class="node-tool-chip" data-delay="2">alerts</div>
+      </div>
+    </div>
+
+    <!-- Bottom-left: Blade MCP -->
+    <div class="mcp-node node-blade" id="node-blade" style="left:80px; top:370px;">
+      <div class="node-icon-wrap">
+        🎨
+        <div class="node-status"></div>
+        <div class="tool-count-badge">6</div>
+      </div>
+      <div class="node-label">Blade MCP</div>
+      <div class="node-tools">
+        <div class="node-tool-chip" data-delay="0">components</div>
+        <div class="node-tool-chip" data-delay="1">tokens</div>
+        <div class="node-tool-chip" data-delay="2">guidelines</div>
+      </div>
+    </div>
+
+    <!-- Bottom-center: Memory -->
+    <div class="mcp-node node-memory" id="node-memory" style="left:390px; top:420px;">
+      <div class="node-icon-wrap">
+        💾
+        <div class="node-status"></div>
+        <div class="tool-count-badge">4</div>
+      </div>
+      <div class="node-label">Memory</div>
+      <div class="node-tools">
+        <div class="node-tool-chip" data-delay="0">store</div>
+        <div class="node-tool-chip" data-delay="1">retrieve</div>
+        <div class="node-tool-chip" data-delay="2">context</div>
+      </div>
+    </div>
+
+    <!-- Bottom-right: Sequential Thinking -->
+    <div class="mcp-node node-sequential" id="node-sequential" style="left:680px; top:370px;">
+      <div class="node-icon-wrap">
+        🧠
+        <div class="node-status"></div>
+        <div class="tool-count-badge">1</div>
+      </div>
+      <div class="node-label">Sequential Thinking</div>
+      <div class="node-tools">
+        <div class="node-tool-chip" data-delay="0">reason</div>
+        <div class="node-tool-chip" data-delay="1">plan</div>
+      </div>
+    </div>
+
+    <!-- Protocol label -->
+    <div class="protocol-label" id="protocol-label">
+      <div class="protocol-bar"></div>
+      Model Context Protocol · JSON-RPC 2.0 · stdio transport
+      <div class="protocol-bar"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Stagger node appearances
+  const nodes = ['node-slack', 'node-devrev', 'node-grafana', 'node-blade', 'node-memory', 'node-sequential'];
+  nodes.forEach((id, i) => {
+    setTimeout(() => {
+      const el = document.getElementById(id);
+      el.classList.add('visible');
+      // Stagger tool chips within each node
+      const chips = el.querySelectorAll('.node-tool-chip');
+      chips.forEach((chip, j) => {
+        setTimeout(() => chip.classList.add('visible'), 300 + j * 150);
+      });
+    }, 400 + i * 200);
+  });
+
+  // Show protocol label
+  setTimeout(() => {
+    document.getElementById('protocol-label').classList.add('visible');
+  }, 2200);
+</script>
+
+</body>
+</html>

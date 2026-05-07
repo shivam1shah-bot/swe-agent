@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vyom Autonomous Agent Demo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg-dark: #0F172A;
+    --bg-card: rgba(15, 23, 42, 0.7);
+    --border: rgba(51, 65, 85, 0.6);
+    --text-primary: #E2E8F0;
+    --text-muted: #94A3B8;
+    --blue: #3B82F6;
+    --cyan: #06B6D4;
+    --green: #22C55E;
+    --yellow: #EAB308;
+    --red: #EF4444;
+    --purple: #A855F7;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  .demo-container {
+    width: 900px;
+    height: 560px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+  }
+
+  /* Window chrome */
+  .window-chrome {
+    height: 40px;
+    background: rgba(30, 41, 59, 0.8);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 8px;
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-red { background: #EF4444; }
+  .dot-yellow { background: #EAB308; }
+  .dot-green { background: #22C55E; }
+
+  /* Layout */
+  .app-layout {
+    display: flex;
+    height: calc(100% - 40px);
+  }
+
+  /* Sidebar */
+  .sidebar {
+    width: 200px;
+    border-right: 1px solid var(--border);
+    padding: 16px 10px;
+    flex-shrink: 0;
+  }
+  .logo {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 20px;
+    padding: 0 6px;
+  }
+  .logo span {
+    background: linear-gradient(135deg, #3B82F6, #06B6D4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .nav-item {
+    padding: 8px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 2px;
+    transition: all 0.3s;
+  }
+  .nav-item.active {
+    background: rgba(59, 130, 246, 0.15);
+    color: var(--text-primary);
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.1);
+  }
+  .nav-icon { width: 16px; text-align: center; font-size: 12px; }
+
+  /* Main content area */
+  .main-content {
+    flex: 1;
+    padding: 20px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Scenes */
+  .scene {
+    position: absolute;
+    inset: 20px;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    pointer-events: none;
+  }
+  .scene.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* Scene 1: Task Form */
+  .form-header {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .form-subtitle {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr;
+    gap: 16px;
+  }
+  .form-section-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 10px;
+  }
+  .form-group { margin-bottom: 10px; }
+  .form-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+    display: block;
+  }
+  .form-input, .form-textarea {
+    width: 100%;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 10px;
+    color: var(--text-primary);
+    font-size: 12px;
+    font-family: 'Inter', sans-serif;
+  }
+  .form-textarea {
+    height: 120px;
+    resize: none;
+    line-height: 1.5;
+  }
+  .submit-btn {
+    width: 100%;
+    margin-top: 8px;
+    padding: 10px;
+    background: linear-gradient(135deg, #3B82F6, #2563EB);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+
+  /* Typing cursor */
+  .typing-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 14px;
+    background: var(--blue);
+    animation: blink 0.8s infinite;
+    vertical-align: middle;
+    margin-left: 1px;
+  }
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  /* Scene 2: Running task */
+  .task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .task-title {
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .status-running {
+    background: rgba(59, 130, 246, 0.15);
+    color: var(--blue);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+  }
+  .status-completed {
+    background: rgba(34, 197, 94, 0.15);
+    color: var(--green);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+  }
+
+  /* Progress bar */
+  .progress-container {
+    background: rgba(30, 41, 59, 0.5);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+  .progress-bar {
+    height: 6px;
+    background: rgba(51, 65, 85, 0.5);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blue), var(--cyan));
+    border-radius: 3px;
+    transition: width 1s ease;
+    width: 0%;
+  }
+
+  /* Execution log area */
+  .log-area {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    height: 340px;
+    overflow: hidden;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.7;
+  }
+  .log-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    font-family: 'Inter', sans-serif;
+  }
+  .log-header-title {
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse-dot 1.5s infinite;
+  }
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
+    50% { opacity: 0.8; box-shadow: 0 0 0 4px rgba(34,197,94,0); }
+  }
+  .log-line {
+    opacity: 0;
+    transform: translateY(6px);
+    transition: all 0.3s ease;
+    padding: 2px 0;
+  }
+  .log-line.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .log-line .prefix {
+    color: var(--text-muted);
+    margin-right: 6px;
+  }
+  .log-line .action { color: var(--cyan); }
+  .log-line .file { color: var(--yellow); }
+  .log-line .success { color: var(--green); }
+  .log-line .error { color: var(--red); }
+  .log-line .comment { color: var(--text-muted); }
+  .log-line .highlight { color: var(--purple); }
+
+  /* Scene 3: Completion */
+  .completion-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    text-align: center;
+  }
+  .check-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(34, 197, 94, 0.15);
+    border: 2px solid var(--green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin-bottom: 16px;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.5s ease;
+  }
+  .check-circle.visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+  .completion-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    opacity: 0;
+    transition: opacity 0.5s ease 0.3s;
+  }
+  .completion-title.visible { opacity: 1; }
+
+  .result-cards {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    opacity: 0;
+    transition: opacity 0.5s ease 0.6s;
+  }
+  .result-cards.visible { opacity: 1; }
+  .result-card {
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    text-align: left;
+    min-width: 180px;
+  }
+  .result-card-icon {
+    font-size: 20px;
+    margin-bottom: 6px;
+  }
+  .result-card-title {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+  .result-card-detail {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .result-card-link {
+    font-size: 11px;
+    color: var(--blue);
+    text-decoration: none;
+    margin-top: 4px;
+    display: block;
+  }
+
+  /* Replay button */
+  .replay-hint {
+    position: absolute;
+    bottom: 12px;
+    right: 16px;
+    font-size: 10px;
+    color: var(--text-muted);
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    cursor: pointer;
+  }
+  .replay-hint.visible {
+    opacity: 0.6;
+  }
+  .replay-hint:hover { opacity: 1; }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 14px;
+  }
+  .tab {
+    padding: 5px 14px;
+    font-size: 12px;
+    border-radius: 6px;
+    color: var(--text-muted);
+    border: 1px solid transparent;
+  }
+  .tab.active {
+    background: rgba(59, 130, 246, 0.12);
+    color: var(--text-primary);
+    border-color: var(--border);
+  }
+
+  /* Flash effect on submit */
+  .flash-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(59, 130, 246, 0.08);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .flash-overlay.active { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="demo-container" id="demo">
+  <!-- Window Chrome -->
+  <div class="window-chrome">
+    <div class="dot dot-red"></div>
+    <div class="dot dot-yellow"></div>
+    <div class="dot dot-green"></div>
+  </div>
+
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="logo">Razorpay <span>Vyom</span></div>
+      <div class="nav-item" data-nav="home"><span class="nav-icon">⌂</span> Home</div>
+      <div class="nav-item active" id="nav-agent" data-nav="agent"><span class="nav-icon">⎔</span> Autonomous Agent</div>
+      <div class="nav-item" data-nav="catalogue"><span class="nav-icon">⊞</span> Agents Catalogue</div>
+      <div class="nav-item" data-nav="skills"><span class="nav-icon">✧</span> Skills Catalogue</div>
+      <div class="nav-item" id="nav-tasks" data-nav="tasks"><span class="nav-icon">⚡</span> Tasks</div>
+      <div class="nav-item" data-nav="mcp"><span class="nav-icon">◈</span> MCP Gateway</div>
+      <div class="nav-item" data-nav="team"><span class="nav-icon">⊕</span> Team</div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+
+      <!-- Scene 1: Form -->
+      <div class="scene active" id="scene-form">
+        <div class="form-header">⎔ Autonomous Agent</div>
+        <div class="form-subtitle">Execute complex tasks using intelligent autonomous agents with tool integration and error recovery.</div>
+        <div class="tabs">
+          <div class="tab active">Single</div>
+          <div class="tab">Batch</div>
+          <div class="tab">Multi-Repo</div>
+          <div class="tab">Clean Slate</div>
+        </div>
+        <div class="form-grid">
+          <div>
+            <div class="form-section-title">Repository</div>
+            <div class="form-group">
+              <div class="form-label">Organization</div>
+              <div class="form-input" style="color:var(--text-muted)">razorpay</div>
+            </div>
+            <div class="form-group">
+              <div class="form-label">Repository Name *</div>
+              <div class="form-input" id="repo-input"></div>
+            </div>
+            <div class="form-group">
+              <div class="form-label">Branch Name (optional)</div>
+              <div class="form-input" style="color:var(--text-muted)">feature-branch</div>
+            </div>
+          </div>
+          <div>
+            <div class="form-section-title">Task</div>
+            <div class="form-group">
+              <div class="form-label">Task Description *</div>
+              <div class="form-textarea" id="task-input"></div>
+            </div>
+            <button class="submit-btn" id="submit-btn">✈ 🚀 Start Autonomous Agent</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scene 2: Running -->
+      <div class="scene" id="scene-running">
+        <div class="task-header">
+          <div class="task-title">📋 Execution Logs</div>
+          <div class="status-badge status-running" id="run-status">▶ Running</div>
+        </div>
+        <div class="progress-container">
+          <div class="progress-label">
+            <span>razorpay/account-service</span>
+            <span id="progress-pct">0%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+        </div>
+        <div class="log-area">
+          <div class="log-header">
+            <div class="log-header-title"><div class="live-dot"></div> Agent Logs — Live</div>
+            <span style="font-size:10px;color:var(--text-muted)" id="log-count">0 logs</span>
+          </div>
+          <div id="log-lines"></div>
+        </div>
+      </div>
+
+      <!-- Scene 3: Completion -->
+      <div class="scene" id="scene-complete">
+        <div class="completion-center">
+          <div class="check-circle" id="check-circle">✓</div>
+          <div class="completion-title" id="completion-title">Task Completed Successfully</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;opacity:0;transition:opacity 0.5s ease 0.4s" id="comp-sub">razorpay/account-service — 4 files changed</div>
+          <div class="result-cards" id="result-cards">
+            <div class="result-card">
+              <div class="result-card-icon">🔀</div>
+              <div class="result-card-title">Pull Request Opened</div>
+              <div class="result-card-detail">Remove unused API Test/Live DB configs</div>
+              <div class="result-card-link">→ PR #1847</div>
+            </div>
+            <div class="result-card">
+              <div class="result-card-icon">✅</div>
+              <div class="result-card-title">Tests Passing</div>
+              <div class="result-card-detail">42 tests passed, 0 failed</div>
+              <div class="result-card-link" style="color:var(--green)">All green</div>
+            </div>
+            <div class="result-card">
+              <div class="result-card-icon">💬</div>
+              <div class="result-card-title">Slack Notification</div>
+              <div class="result-card-detail">Posted to #account-service</div>
+              <div class="result-card-link">→ View in Slack</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flash-overlay" id="flash"></div>
+    </div>
+  </div>
+
+  <div class="replay-hint" id="replay" onclick="startDemo()">↻ Replay</div>
+</div>
+
+<script>
+const repoText = "account-service";
+const taskText = `Remove API Test DB and API Live DB configs from ASV service.\n\nThe GetMultiWriteDb transaction logic validates all DB connections on every save, even unused ones. This blocks ASV writes when Test/Live DBs are down.\n\nFix:\n1. Remove API Test and API Live DB configs\n2. Add ASV Writer DB to readiness probe`;
+
+const logEntries = [
+  { prefix: "→", text: '<span class="action">Cloning</span> razorpay/account-service...', delay: 0 },
+  { prefix: "→", text: '<span class="action">Analyzing</span> repository structure <span class="comment">(1,247 files)</span>', delay: 600 },
+  { prefix: "→", text: '<span class="action">Reading</span> <span class="file">internal/config/config.go</span>', delay: 500 },
+  { prefix: "⚡", text: 'Found <span class="highlight">ApiTestDb</span> and <span class="highlight">ApiLiveDb</span> in config struct', delay: 700 },
+  { prefix: "→", text: '<span class="action">Searching</span> for GetMultiWriteDb references...', delay: 500 },
+  { prefix: "→", text: '<span class="action">Reading</span> <span class="file">internal/asv/helper/multi_write.go</span>', delay: 600 },
+  { prefix: "⚡", text: 'Identified DB validation in <span class="highlight">GetMultiWriteDb()</span> — checks all configured DBs', delay: 800 },
+  { prefix: "→", text: '<span class="action">Reading</span> <span class="file">internal/boot/app/database.go</span>', delay: 500 },
+  { prefix: "→", text: '<span class="action">Reading</span> <span class="file">environments/prod.toml</span>', delay: 400 },
+  { prefix: "✏", text: '<span class="action">Editing</span> <span class="file">config.go</span> — removing ApiTestDb, ApiLiveDb fields', delay: 700 },
+  { prefix: "✏", text: '<span class="action">Editing</span> <span class="file">database.go</span> — removing Test/Live DB init logic', delay: 600 },
+  { prefix: "✏", text: '<span class="action">Editing</span> <span class="file">multi_write.go</span> — updating GetMultiWriteDb to skip removed DBs', delay: 700 },
+  { prefix: "✏", text: '<span class="action">Editing</span> <span class="file">readiness.go</span> — adding ASV Writer DB health check', delay: 600 },
+  { prefix: "→", text: '<span class="action">Running</span> <span class="file">go build ./...</span>', delay: 800 },
+  { prefix: "✓", text: '<span class="success">Build successful</span> — no compilation errors', delay: 600 },
+  { prefix: "→", text: '<span class="action">Running</span> <span class="file">go test ./internal/...</span>', delay: 1000 },
+  { prefix: "✓", text: '<span class="success">42 tests passed</span>, 0 failed, 0 skipped', delay: 700 },
+  { prefix: "→", text: '<span class="action">Creating branch</span> fix/remove-unused-db-configs', delay: 500 },
+  { prefix: "→", text: '<span class="action">Committing</span> 4 files changed, +47 -183 lines', delay: 500 },
+  { prefix: "→", text: '<span class="action">Opening PR</span> #1847 — "Remove unused API Test/Live DB configs"', delay: 600 },
+  { prefix: "✓", text: '<span class="success">PR opened</span> → razorpay/account-service#1847', delay: 500 },
+  { prefix: "→", text: '<span class="action">Posting</span> summary to <span class="highlight">#account-service</span> Slack channel', delay: 500 },
+  { prefix: "✓", text: '<span class="success">Slack notification sent</span>', delay: 400 },
+  { prefix: "✓", text: '<span class="success">Task completed successfully</span> in <span class="highlight">3m 42s</span>', delay: 600 },
+];
+
+let animationTimer = null;
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+async function typeText(el, text, speed = 35) {
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '\n') {
+      el.innerHTML += '<br>';
+    } else {
+      el.innerHTML += text[i];
+    }
+    await sleep(speed);
+  }
+}
+
+function showScene(id) {
+  document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function setActiveNav(id) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(id)?.classList.add('active');
+}
+
+async function startDemo() {
+  // Reset
+  document.getElementById('replay').classList.remove('visible');
+  document.getElementById('repo-input').innerHTML = '';
+  document.getElementById('task-input').innerHTML = '';
+  document.getElementById('log-lines').innerHTML = '';
+  document.getElementById('progress-fill').style.width = '0%';
+  document.getElementById('progress-pct').textContent = '0%';
+  document.getElementById('log-count').textContent = '0 logs';
+  document.getElementById('run-status').className = 'status-badge status-running';
+  document.getElementById('run-status').innerHTML = '▶ Running';
+  document.getElementById('check-circle').classList.remove('visible');
+  document.getElementById('completion-title').classList.remove('visible');
+  document.getElementById('comp-sub').style.opacity = '0';
+  document.getElementById('result-cards').classList.remove('visible');
+  // Scene 1: Form
+  showScene('scene-form');
+  setActiveNav('nav-agent');
+
+  await sleep(800);
+
+  // Type repo name
+  const repoInput = document.getElementById('repo-input');
+  repoInput.innerHTML = '<span class="typing-cursor"></span>';
+  await sleep(300);
+  repoInput.innerHTML = '';
+  await typeText(repoInput, repoText, 60);
+
+  await sleep(400);
+
+  // Type task description
+  const taskInput = document.getElementById('task-input');
+  taskInput.innerHTML = '<span class="typing-cursor"></span>';
+  await sleep(200);
+  taskInput.innerHTML = '';
+  await typeText(taskInput, taskText, 18);
+
+  await sleep(600);
+
+  // Flash submit
+  const flash = document.getElementById('flash');
+  flash.classList.add('active');
+  await sleep(200);
+  flash.classList.remove('active');
+
+  await sleep(500);
+
+  // Scene 2: Running logs
+  showScene('scene-running');
+  setActiveNav('nav-tasks');
+
+  await sleep(400);
+
+  // Stream logs
+  const logContainer = document.getElementById('log-lines');
+  for (let i = 0; i < logEntries.length; i++) {
+    const entry = logEntries[i];
+    const line = document.createElement('div');
+    line.className = 'log-line';
+    line.innerHTML = `<span class="prefix">${entry.prefix}</span> ${entry.text}`;
+    logContainer.appendChild(line);
+
+    // Scroll to keep latest visible
+    if (logContainer.children.length > 14) {
+      logContainer.children[logContainer.children.length - 15].style.display = 'none';
+    }
+
+    await sleep(80);
+    line.classList.add('visible');
+
+    // Update progress
+    const pct = Math.min(Math.round(((i + 1) / logEntries.length) * 100), 100);
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-pct').textContent = pct + '%';
+    document.getElementById('log-count').textContent = (i + 1) + ' logs';
+
+    await sleep(entry.delay);
+  }
+
+  await sleep(600);
+
+  // Update status to completed
+  document.getElementById('run-status').className = 'status-badge status-completed';
+  document.getElementById('run-status').innerHTML = '✓ Completed';
+
+  await sleep(800);
+
+  // Scene 3: Completion
+  showScene('scene-complete');
+
+  await sleep(300);
+  document.getElementById('check-circle').classList.add('visible');
+  await sleep(400);
+  document.getElementById('completion-title').classList.add('visible');
+  await sleep(200);
+  document.getElementById('comp-sub').style.opacity = '1';
+  await sleep(400);
+  document.getElementById('result-cards').classList.add('visible');
+
+  await sleep(1500);
+  document.getElementById('replay').classList.add('visible');
+
+  // Auto-replay after 4s
+  await sleep(4000);
+  startDemo();
+}
+
+// Auto-start
+startDemo();
+</script>
+</body>
+</html>

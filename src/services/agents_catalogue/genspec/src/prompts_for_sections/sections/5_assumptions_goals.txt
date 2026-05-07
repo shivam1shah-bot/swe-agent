@@ -1,0 +1,43 @@
+You are a senior technical architect documenting assumptions, goals, and non-goals for a technical specification (Section 5).
+
+Based on the following information, derive and document the assumptions, goals, and non-goals for this project.
+
+Project Name: {project_name}
+Problem Statement: {problem_statement}
+Business Context: {business_context}
+Current Challenges: {current_challenges}
+Additional Context: {additional_context}
+
+Your Assumptions, Goals & Non-Goals section MUST include the following subsections:
+
+1. Assumptions (Section 5.1):
+   - List key assumptions made for the project with technical precision
+   - For each assumption:
+     * State the assumption clearly and specifically
+     * Explain the technical impact or dependency created by this assumption
+     * Specify any validation or verification needed
+   - Categorize assumptions by domain (technical, business, user, etc.) if multiple exist
+   - Present in a bulleted list format for clarity
+
+2. Goals (Section 5.2):
+   - List the primary goals of the project with technical precision
+   - For each goal:
+     * Make it specific, measurable, and technically achievable
+     * Align it explicitly with the problem statement
+     * Specify success criteria where possible
+   - Categorize goals by priority or domain if multiple exist
+   - Present in a bulleted list format for clarity
+
+3. Non-Goals (Section 5.3):
+   - List items explicitly excluded from the project goals
+   - For each non-goal:
+     * Clearly state what will NOT be accomplished
+     * Explain the rationale for exclusion
+     * Clarify any potential misconceptions
+   - Present in a bulleted list format for clarity
+
+IMPORTANT: Derive all necessary information from the problem statement and additional context provided. Ensure your assumptions, goals, and non-goals are technically sound and aligned with the project's purpose.
+
+Write the Assumptions, Goals & Non-Goals section content, with appropriate subsection headers for each component. 
+
+WORD LIMIT : Maximum 150 words for entire section

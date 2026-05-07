@@ -1,0 +1,129 @@
+# GenSpec Static Configuration
+# This file contains configuration that remains the same across all environments
+
+[paths]
+templates = "src/templates"
+output = "output"
+architecture_images = "assets/architecture_images"
+service_context_cache = "src/services/agents_catalogue/genspec/cache/service_context"
+
+[templates]
+base_dir = "src/services/agents_catalogue/genspec/src/templates"
+default = "default_template.md"
+base_path = "src/services/agents_catalogue/genspec/src/prompts_for_sections/sections"
+sections = [
+  "1_problem_statement.txt",
+  "2_introduction.txt",
+  "2_scope.txt",
+  "3_out_of_scope.txt",
+  "4_futuristic_scope.txt",
+  "5_assumptions_goals.txt",
+  "6_current_architecture.txt",
+  "6_1_api_documentation.txt",
+  "7_evaluated_approaches.txt",
+  "7_2_data_model_changes.txt",
+  "7_3_business_logic_changes.txt",
+  "7_4_db_evaluation.txt",
+  "8_nfr.txt",
+  "8_1_failure_points_resilience.txt",
+  "9_dependencies.txt",
+  "10_testing_plan.txt",
+  "11_go_live_plan.txt",
+  "12_monitoring_logging.txt",
+  "13_milestones_timelines.txt"
+]
+
+[analysis]
+problem_statement_prompt_template = "src/services/agents_catalogue/genspec/src/prompts_for_sections/sections/1_problem_statement.txt"
+prd_analysis_prompt_template = "src/services/agents_catalogue/genspec/src/prompts_for_sections/sections/2_introduction.txt"
+architecture_analysis_prompt_template = "src/services/agents_catalogue/genspec/src/prompts_for_sections/sections/6_current_architecture.txt"
+database_analysis_prompt_template = "src/services/agents_catalogue/genspec/src/prompts_for_sections/sections/7_2_data_model_changes.txt"
+db_evaluation_prompt_template = "src/services/agents_catalogue/genspec/src/prompts_for_sections/sections/7_4_db_evaluation.txt"
+resilience_analysis_prompt_template = "src/services/agents_catalogue/genspec/src/prompts_for_sections/sections/8_nfr.txt"
+approach_evaluation_prompt_template = "src/services/agents_catalogue/genspec/src/prompts_for_sections/sections/7_evaluated_approaches.txt"
+api_documentation_template = "src/services/agents_catalogue/genspec/src/prompts_for_sections/sections/6_1_api_documentation.txt"
+failure_points_resilience_template = "src/services/agents_catalogue/genspec/src/prompts_for_sections/sections/8_1_failure_points_resilience.txt"
+
+[genspec]
+bedrock = { model_id = "anthropic.claude-3-5-sonnet-20240620-v1:0", max_tokens = 4096, temperature = 0.7, top_p = 0.9 }
+
+[langchain]
+use_memory = true
+memory_type = "buffer"
+memory_token_limit = 4000
+
+[import]
+type = "url"
+url = "https://gist.githubusercontent.com/butschster/1b7e597691cc1a6476b15dc120ecbddb/raw/8c0f9d0145dcd260b814f866ec130ec630c80ee8/prompts.yaml"
+
+[[prompts]]
+id = "code-analyzer"
+description = "Prompt for analyzing code structure"
+messages = [
+  { role = "user", content = """
+    Analyze the provided code and identify:
+    
+    1. Key components and their relationships
+    2. Flow of execution
+    3. Potential failure points
+    4. API endpoints
+    5. Background jobs or tasks
+    6. Retry mechanisms
+    7. Idempotency mechanisms
+    
+    Provide a comprehensive analysis of the code structure and suggest improvements
+    for resilience, error handling, and maintainability.
+  """ }
+]
+
+[[prompts]]
+id = "flow-analyzer"
+description = "Prompt for analyzing code flows"
+messages = [
+  { role = "user", content = """
+    Analyze the provided code flow and identify:
+    
+    1. Entry points
+    2. Exit points
+    3. Decision points
+    4. External service calls
+    5. Database operations
+    6. Error handling
+    7. Retry mechanisms
+    8. Idempotency mechanisms
+    
+    Create a flow diagram using Mermaid syntax and provide recommendations for
+    improving resilience, error handling, and maintainability.
+  """ }
+]
+
+[ignore_patterns]
+patterns = [
+  "*.pyc",
+  "__pycache__",
+  "*.git*",
+  "*.idea*",
+  "*.vscode*",
+  "node_modules",
+  "venv",
+  "env",
+  ".env",
+  "*.egg-info",
+  "dist",
+  "build",
+  "*.log",
+  "output",
+  "assets",
+  "*.md"
+]
+
+[output]
+directory = "docs"
+format = "markdown"
+include_diagrams = true
+include_tables = true
+
+# Service Context Configuration
+# Provides knowledge of existing Razorpay services to improve spec generation
+[service_context]
+enabled = true

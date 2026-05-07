@@ -1,0 +1,154 @@
+---
+alwaysApply: true
+---
+
+
+# General Development Rules
+
+## CRITICAL REQUIREMENT
+**Before ANY implementation or code changes:**
+1. **Create a detailed plan** with specific steps
+2. **Ask clarification questions** for unclear requirements  
+3. **Get explicit user approval** before proceeding
+
+## Workflow
+1. **Analyze** - Break down the task, identify affected components
+2. **Clarify** - Ask about requirements, constraints, edge cases
+3. **Plan** - Present approach and ask: "Should I proceed?"
+4. **Implement** - Only after user approval
+
+## Response Format
+```
+## Analysis
+[Brief analysis]
+
+## Plan
+1. [Step 1]
+2. [Step 2]
+...
+
+## Questions
+- [Clarification needed]
+
+## Ready?
+Should I proceed with this plan?
+```
+
+**Never start coding without explicit user approval!**
+
+## Agent Development Requests
+
+### When User Says "Help me build my agent"
+**Always refer to**: `docs/agents_catalogue/`
+- `agent_development.md` - Complete step-by-step guide
+- `README.md` - Quick overview
+
+**Development Paths**:
+- `src/services/agents_catalogue/` - Production agents  
+- `src/agents/` - Custom/experimental agents
+
+**Examples**: Check existing agents in `src/agents/` for patterns
+
+## Cleanup & Documentation Rules
+
+### Session Cleanup
+- **Always delete temporary files** created during development session
+- **Remove debug files, test artifacts, and experimental code** before completion
+- **Clean up any helper scripts or temporary directories** used for iteration
+
+### Documentation Maintenance
+- **Update `docs/` folder** when adding new features or changing architecture
+- **Keep module-level READMEs current** - crisp, concise, and accurate
+- **Document new patterns, configurations, or significant changes** immediately
+
+## Docker Setup Rules
+
+### When User Says "Spin Up Docker Setup"
+**Recommended: Use Makefile commands** (but docker-compose directly is also fine)
+
+- **Complete rebuild**: `make rebuild` or `docker-compose down && docker-compose build --no-cache && docker-compose up -d`
+- **Standard build**: `make build` or `docker-compose build`
+- **Specific services**: `make build-ui/api/worker` or `docker-compose build [service]`
+
+**Available Makefile shortcuts:**
+- `make restart` - Restart app containers only (API, UI, worker) - keeps infrastructure running
+- `make restart-all` - Restart all services including DB, Redis, LocalStack
+- `make rebuild` - Complete rebuild and restart
+- `make build` - Build all images
+- `make build-ui/api/worker` - Build specific services
+
+# General Development Rules
+
+## CRITICAL REQUIREMENT
+**Before ANY implementation or code changes:**
+1. **Create a detailed plan** with specific steps
+2. **Ask clarification questions** for unclear requirements  
+3. **Get explicit user approval** before proceeding
+
+## Workflow
+1. **Analyze** - Break down the task, identify affected components
+2. **Clarify** - Ask about requirements, constraints, edge cases
+3. **Plan** - Present approach and ask: "Should I proceed?"
+4. **Implement** - Only after user approval
+
+## Response Format
+```
+## Analysis
+[Brief analysis]
+
+## Plan
+1. [Step 1]
+2. [Step 2]
+...
+
+## Questions
+- [Clarification needed]
+
+## Ready?
+Should I proceed with this plan?
+```
+
+**Never start coding without explicit user approval!**
+
+## Agent Development Requests
+
+### When User Says "Help me build my agent"
+**Always refer to**: `docs/agents_catalogue/`
+- `agent_development.md` - Complete step-by-step guide
+- `README.md` - Quick overview
+
+**Development Paths**:
+- `src/services/agents_catalogue/` - Production agents  
+- `src/agents/` - Custom/experimental agents
+
+**Examples**: Check existing agents in `src/agents/` for patterns
+
+Respond giving a plan on where to make the changes
+
+## Cleanup & Documentation Rules
+
+### Session Cleanup
+- **Always delete temporary files** created during development session
+- **Remove debug files, test artifacts, and experimental code** before completion
+- **Clean up any helper scripts or temporary directories** used for iteration
+
+### Documentation Maintenance
+- **Update `docs/` folder** when adding new features or changing architecture
+- **Keep module-level READMEs current** - crisp, concise, and accurate
+- **Document new patterns, configurations, or significant changes** immediately
+
+## Docker Setup Rules
+
+### When User Says "Spin Up Docker Setup"
+**Recommended: Use Makefile commands** (but docker-compose directly is also fine)
+
+- **Complete rebuild**: `make rebuild` or `docker-compose down && docker-compose build --no-cache && docker-compose up -d`
+- **Standard build**: `make build` or `docker-compose build`
+- **Specific services**: `make build-ui/api/worker` or `docker-compose build [service]`
+
+**Available Makefile shortcuts:**
+- `make restart` - Restart app containers only (API, UI, worker) - keeps infrastructure running
+- `make restart-all` - Restart all services including DB, Redis, LocalStack
+- `make rebuild` - Complete rebuild and restart
+- `make build` - Build all images
+- `make build-ui/api/worker` - Build specific services

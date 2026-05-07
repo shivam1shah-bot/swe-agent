@@ -1,0 +1,33 @@
+name: Structure Verification
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+env:
+  PYTHON_VERSION: "3.13"
+
+jobs:
+  # ============================================
+  # Structure Verification
+  # ============================================
+  verify-structure:
+    name: Verify Repository Structure
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install toml library
+        run: pip install tomli
+
+      - name: Run structure verification
+        run: python scripts/verify_structure.py

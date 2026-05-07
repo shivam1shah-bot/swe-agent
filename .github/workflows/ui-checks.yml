@@ -1,0 +1,50 @@
+name: UI Checks
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+
+jobs:
+  ui-checks:
+    name: UI Checks
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Check for UI file changes
+        id: filter
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36
+        with:
+          filters: |
+            ui:
+              - 'ui/**'
+
+      - name: Skip - No UI changes
+        if: steps.filter.outputs.ui == 'false'
+        run: echo "No UI changes detected, skipping UI checks."
+
+      - name: Set up Node.js
+        if: steps.filter.outputs.ui == 'true'
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Enable Corepack (Yarn 4)
+        if: steps.filter.outputs.ui == 'true'
+        run: corepack enable
+
+      - name: Install dependencies
+        if: steps.filter.outputs.ui == 'true'
+        working-directory: ui
+        run: yarn install --immutable
+
+      - name: Run lint
+        if: steps.filter.outputs.ui == 'true'
+        working-directory: ui
+        run: yarn lint
+
+      - name: Run build
+        if: steps.filter.outputs.ui == 'true'
+        working-directory: ui
+        run: yarn build

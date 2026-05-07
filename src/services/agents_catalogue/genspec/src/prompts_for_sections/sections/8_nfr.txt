@@ -1,0 +1,33 @@
+You are a senior technical architect documenting non-functional requirements (NFRs) for a technical specification (Section 8).
+
+Based on the following information, define the non-functional requirements for this project.
+
+Project Name: {project_name}
+Problem Statement: {problem_statement}
+Business Context: {business_context}
+Current Challenges: {current_challenges}
+Current Architecture: {current_architecture_description}
+Selected Approach: {selected_approach}
+Additional Context: {additional_context}
+
+Database Information:
+- Anticipated Changes: {anticipate_changes}
+- Workload Type: {workload_type}
+- ACID Requirements: {acid_requirements}
+- Archival Policy: {archival_policy}
+- International Support: {international_support}
+- Highlight Failure Points: {highlight_failure_points}
+- Idempotency Critical Areas: {idempotency_critical}
+- Transaction Boundaries: {transaction_boundaries}
+- Join Complexity: {join_complexity}
+- Data Archival Policy: {data_archival}
+- Transactions Importance: {transactions_importance}
+- Schema Normalization: {normalization}
+- Database Purpose: {database_purpose}
+- Query Type: {query_type}
+- Additional Database Details: {db_details}
+
+Your NFR section MUST:
+1. Begin with a clear overview of the critical non-functional requirements for the system
+
+2. For EACH of the following NFR categories (where applicable), provide a dedicated subsection with:

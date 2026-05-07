@@ -1,0 +1,148 @@
+---
+description: 
+globs: *.py
+alwaysApply: false
+---
+# Python FastAPI Development Rules
+
+## Environment & Technology Stack
+
+### Python Version
+- Use Python 3.12
+
+### Core Frameworks & Libraries
+- **FastAPI** - Main web framework
+- **Pydantic v2** - Data validation and serialization
+- **SQLAlchemy 2.0** - ORM (when using ORM features)
+- **Async database libraries** - asyncpg or aiomysql
+
+### Development Tools
+- **Poetry** - Dependency management
+- **Alembic** - Database migrations
+
+### FastAPI Extensions
+- **fastapi-users** - User management
+- **fastapi-jwt-auth** - Authentication
+- **fastapi-mail** - Email sending
+- **fastapi-cache** - Caching
+- **fastapi-limiter** - Rate limiting
+- **fastapi-pagination** - Pagination
+
+## Code Quality & Style Standards
+
+### Naming Conventions
+- Use **meaningful names**: Choose descriptive variable, function, and class names
+- Use **auxiliary verbs** for descriptive variables (`is_active`, `has_permission`)
+- Use **lowercase with underscores** for directories and files (`routers/user_routes.py`)
+- Favor **named exports** for routes and utility functions
+
+### Code Style
+- **Follow PEP 8**: Adhere to Python Enhancement Proposal 8 style guide
+- **Use docstrings**: Document functions and classes with docstrings
+- **Keep it simple**: Write simple and clear code; avoid unnecessary complexity
+- **Use type hints**: Utilize type hints for all function signatures
+- **Avoid global variables**: Limit use to reduce side effects
+
+### Python Best Practices
+- **Use list comprehensions**: Prefer over traditional loops when appropriate
+- **Handle exceptions**: Use try-except blocks gracefully
+- **Use virtual environments**: Isolate project dependencies
+- **Write tests**: Implement unit tests for reliability
+- **Use functional programming**: Prefer iteration and modularization over duplication
+
+## FastAPI-Specific Guidelines
+
+### Function Definitions
+- Use `def` for **pure functions** and synchronous operations
+- Use `async def` for **asynchronous operations** and I/O-bound tasks
+- Use **type hints** for all function signatures
+- Prefer **Pydantic models** over raw dictionaries for input validation
+
+### File Structure
+- **Exported router** first
+- **Sub-routes**
+- **Utilities**
+- **Static content**
+- **Types** (models, schemas)
+
+### Route Patterns
+- Use **functional components** (plain functions) and Pydantic models
+- Use **declarative route definitions** with clear return type annotations
+- Use the **RORO pattern** (Receive an Object, Return an Object)
+- **Minimize** `@app.on_event("startup")` and `@app.on_event("shutdown")`
+- **Prefer lifespan context managers** for startup/shutdown events
+
+### Dependency Management
+- **Rely on FastAPI's dependency injection** system for state and shared resources
+- Use **middleware** for logging, error monitoring, and performance optimization
+
+## Error Handling & Validation
+
+### Error Handling Priority
+- **Handle errors and edge cases at the beginning** of functions
+- **Use early returns** for error conditions to avoid deeply nested if statements
+- **Place the happy path last** in the function for improved readability
+- **Avoid unnecessary else statements**; use the if-return pattern instead
+- **Use guard clauses** to handle preconditions and invalid states early
+
+### Error Implementation
+- **Use HTTPException** for expected errors and model them as specific HTTP responses
+- **Use middleware** for handling unexpected errors, logging, and error monitoring
+- **Implement proper error logging** and user-friendly error messages
+- **Use custom error types** or error factories for consistent error handling
+
+### Validation
+- **Use Pydantic's BaseModel** for consistent input/output validation and response schemas
+- **Prioritize error handling** and edge cases in all functions
+- **Use `@field_validator`** instead of deprecated `@validator` decorator
+- **Import `field_validator` and `ValidationInfo`** from pydantic
+- **Use `@classmethod` decorator** for field validators in Pydantic V2
+- **Access other field values** via `info.data.get('field_name')` instead of `values` parameter
+
+## Performance Optimization
+
+### Asynchronous Operations
+- **Minimize blocking I/O operations**: use asynchronous operations for all database calls and external API requests
+- **Use dedicated async functions** for database and external API operations
+- **Favor asynchronous and non-blocking flows**
+
+### Caching & Data Management
+- **Implement caching** for static and frequently accessed data using Redis or in-memory stores
+- **Optimize data serialization** and deserialization with Pydantic
+- **Use lazy loading techniques** for large datasets and substantial API responses
+
+### Performance Metrics
+- **Prioritize API performance metrics** (response time, latency, throughput)
+- **Limit blocking operations** in routes
+- **Structure routes and dependencies clearly** to optimize readability and maintainability
+
+## Key Conventions
+
+### Conditional Statements
+- **Avoid unnecessary curly braces** in conditional statements
+- **For single-line statements** in conditionals, omit curly braces
+- **Use concise, one-line syntax** for simple conditional statements (`if condition: do_something()`)
+
+### Architecture Patterns
+1. **Use functional, declarative programming**; avoid classes where possible
+2. **Prefer iteration and modularization** over code duplication
+3. **Optimize for performance** using async functions for I/O-bound tasks
+4. **Use middleware** for cross-cutting concerns
+
+### Development Workflow
+- **Write tests** for all critical functionality
+- **Use virtual environments** (`venv`) for project isolation
+- **Follow FastAPI documentation** for Data Models, Path Operations, and Middleware
+- **Implement proper logging** and monitoring
+
+## Quick Reference Checklist
+
+- ✅ FastAPI with Pydantic models
+- ✅ Async/await for I/O operations
+- ✅ Early error handling and validation
+- ✅ Meaningful names and PEP 8 compliance
+- ✅ Dependency injection and middleware
+- ✅ Performance optimization with caching
+- ✅ Comprehensive testing and documentation
+- ✅ Poetry for dependency management
+- ✅ Proper error logging and monitoring

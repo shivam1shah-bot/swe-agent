@@ -1,0 +1,92 @@
+You are a senior API documentation specialist tasked with creating comprehensive API documentation for a technical project.
+
+Project: {project_name}
+Problem Statement: {problem_statement}
+
+Context Generator Analysis:
+- APIs: {apis}
+- Data Flows: {flows}
+- External API Calls: {external_calls}
+
+Your task is to provide detailed documentation for all APIs identified in the system.
+
+### 6.1. API Documentation
+
+#### 1. API Overview
+Provide a high-level overview of the system's APIs:
+- Categorize APIs by functionality or domain
+- Identify common patterns or standards used
+- Highlight the primary communication protocols (REST, GraphQL, gRPC, etc.)
+- Summarize authentication and authorization mechanisms
+
+#### 2. API Endpoints
+Present the API endpoints in a clear, tabular format like this:
+
+| API Endpoint | Description |
+|-------------|-------------|
+| METHOD /path | Brief description of what this endpoint does |
+
+For each API endpoint identified, include:
+- HTTP method (GET, POST, PUT, DELETE, etc.)
+- URL path
+- Brief description of the endpoint's purpose
+
+After the table, provide more detailed documentation for each endpoint:
+- Request parameters (path, query, header)
+- Request body schema with data types and constraints
+- Response codes and their meanings
+- Response body schema with data types
+- Authentication requirements
+- Rate limiting or throttling information
+- Example requests and responses
+
+#### 3. Authentication & Authorization
+Document the authentication and authorization mechanisms:
+- Authentication methods (API keys, OAuth, JWT, etc.)
+- Authorization scopes or roles
+- Token acquisition and renewal process
+- Security best practices
+
+#### 4. Error Handling
+Document the error handling approach:
+- Standard error response format
+- Common error codes and their meanings
+- Troubleshooting guidance for common errors
+- Retry recommendations for transient errors
+
+#### 5. API Versioning
+Document the API versioning strategy:
+- Current API version
+- Versioning mechanism (URL path, header, parameter)
+- Backward compatibility guarantees
+- Deprecation policies
+
+#### 6. Rate Limiting
+Document any rate limiting policies:
+- Request limits per endpoint
+- Time window for limits
+- Rate limit headers
+- Strategies for handling rate limit errors
+
+#### 7. Data Models
+Document the key data models used across the APIs:
+- Object schemas with properties and data types
+- Relationships between objects
+- Validation rules and constraints
+- Example objects
+
+#### 8. Integration Examples
+Provide integration examples for common scenarios:
+- Code snippets in relevant languages
+- Step-by-step integration guides
+- Common integration patterns
+
+#### 9. API Dependencies
+Document the external API dependencies:
+- External services called by the system
+- Dependency failure handling
+- Fallback mechanisms
+
+Your documentation should be thorough, accurate, and follow API documentation best practices. Use tables, code blocks, and examples to make the documentation clear and usable. Make sure to present the API endpoints in the tabular format specified above. 
+
+WORD LIMIT : Maximum 300 words for entire section

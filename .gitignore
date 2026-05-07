@@ -1,0 +1,84 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Virtual environments
+venv/
+.venv/
+
+# Distribution / packaging
+dist/
+*.egg-info/
+
+# Node modules
+@/node_modules
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Logs and databases
+*.log
+logs/
+*.sqlite
+*.db
+
+# Project specific
+data/*
+!data/.gitkeep
+!models/.gitkeep 
+
+# Auto-generated documentation tmp files
+tmp/
+uploads/
+
+# Testing and Coverage Files
+coverage/*
+.coverage
+.coverage.xml
+.coverage.json
+coverage.xml
+htmlcov/*
+.pytest_cache/*
+.tox/*
+junit.xml
+test-results/*
+
+# Local config overrides
+environments/env.dev.toml
+environments/env.dev_docker.toml
+
+# Corporate proxy certificates (organization-specific)
+*.crt
+*.cer
+*.pem
+*.p12
+*.pfx
+ca-certificates/
+
+# Env
+.env
+*.env.local
+
+# Database
+# *.sqlite
+# *.sqlite-journal
+
+/node_modules/*
+
+# Pre-mortem skill - baked into Docker image at build time (production)
+# For local dev, run scripts/install_review_skills.sh to install manually
+# These paths are ignored to prevent committing skill files to repo
+.agents/skills/pre-mortem/
+.claude/skills/pre-mortem
+.claude/skills/review-helpers/pre-mortem
+skills-lock.json
+.worktrees/
