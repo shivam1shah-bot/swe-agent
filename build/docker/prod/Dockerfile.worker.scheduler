@@ -1,7 +1,7 @@
 # Dockerfile for the SWE Agent Scheduler Worker
 # Lightweight — runs APScheduler + Redis, does NOT need Claude Code, GitHub CLI, or Go toolchain.
 
-FROM c.rzp.io/razorpay/rzp-docker-image-inventory-multi-arch:rzp-golden-image-base-python-3.13-alpine3.22
+FROM python:3.13-alpine3.22
 
 WORKDIR /app
 

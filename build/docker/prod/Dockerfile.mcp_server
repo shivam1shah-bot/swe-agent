@@ -1,6 +1,6 @@
 # Dockerfile for the SWE Agent MCP Service
 
-FROM c.rzp.io/razorpay/rzp-docker-image-inventory-multi-arch:rzp-golden-image-base-python-3.13-alpine3.22
+FROM python:3.13-alpine3.22
 
 WORKDIR /app
 

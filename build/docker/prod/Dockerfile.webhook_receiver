@@ -1,7 +1,7 @@
 # SWE Agent Webhook Receiver - Production
 # Lightweight image: only FastAPI + Redis + TOML (no AI/ML/GitHub deps)
 
-FROM c.rzp.io/razorpay/rzp-docker-image-inventory-multi-arch:rzp-golden-image-base-python-3.13-alpine3.22
+FROM python:3.13-alpine3.22
 
 WORKDIR /app
 

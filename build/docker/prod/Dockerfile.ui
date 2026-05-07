@@ -11,7 +11,7 @@
 
 # Stage 1: Builder
 # Installs ALL dependencies (dev + prod) needed for the Vite build
-FROM c.rzp.io/razorpay/rzp-docker-image-inventory-multi-arch:rzp-golden-image-base-node-24-alpine3.23 AS builder
+FROM node:24-alpine3.21 AS builder
 
 WORKDIR /app
 
@@ -63,7 +63,7 @@ RUN yarn build
 
 # Stage 2: Production runtime
 # Fresh image with only production dependencies
-FROM c.rzp.io/razorpay/rzp-docker-image-inventory-multi-arch:rzp-golden-image-base-node-24-alpine3.23
+FROM node:24-alpine3.21
 
 WORKDIR /app
 
