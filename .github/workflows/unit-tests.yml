@@ -23,22 +23,10 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Generate GitHub App Token
-        id: app-token
-        uses: actions/create-github-app-token@v1
-        with:
-          app-id: ${{ secrets.WORKFLOWGATEKEEPER_APP_ID }}
-          private-key: ${{ secrets.WORKFLOWGATEKEEPER_PRIVATEKEY }}
-          owner: razorpay
-          repositories: "ai-pr-reviewer,agent-skills"
-
       - name: Install dependencies
         env:
-          GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           PIP_NO_CACHE_DIR: "1"
         run: |
-          # Configure git to use GitHub App token for private repo access
-          git config --global url."https://x-access-token:${GITHUB_TOKEN}@github.com/".insteadOf "https://github.com/"
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
