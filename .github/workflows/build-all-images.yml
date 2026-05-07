@@ -7,7 +7,6 @@ env:
   REGISTRY: c.rzp.io
   NAMESPACE: razorpay
 
-# Concurrency: cancel in-progress runs for the same ref (except master)
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
@@ -19,29 +18,29 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - linux-amd64
-          - linux-arm64
-    runs-on:
-      - non-api
-      - ${{ matrix.platform }}
-    continue-on-error: false
+        include:
+          - platform: linux-amd64
+            runner: ubuntu-latest
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
-      - name: Build and push UI image (${{ matrix.platform }})
-        uses: razorpay/actions/docker-image-build-push@master
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
         with:
+          registry: ${{ env.REGISTRY }}
           username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
           password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
-          registry: ${{ env.REGISTRY }}
-          repository: ${{ github.event.repository.name }}
-          custom-tag: ui-${{ github.sha }}-${{ matrix.platform }}
-          enable-login: true
+
+      - uses: docker/build-push-action@v5
+        with:
           context: .
           file: build/docker/prod/Dockerfile.ui
           push: true
+          tags: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:ui-${{ github.sha }}-${{ matrix.platform }}
           build-args: |
             GIT_COMMIT_HASH=${{ github.sha }}
             GIT_USERNAME=rzp
@@ -49,23 +48,22 @@ jobs:
   build-ui-multiarch:
     needs: [build-ui]
     name: Build multiarch UI image
-    runs-on:
-      - non-api
-      - linux-arm64
+    runs-on: ubuntu-latest
     steps:
-      - name: Combine Multi-Arch UI Image
-        uses: razorpay/actions/docker-image-build-push@master
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
         with:
+          registry: ${{ env.REGISTRY }}
           username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
           password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
-          registry: ${{ env.REGISTRY }}
-          repository: ${{ github.event.repository.name }}
-          custom-tag: ui-${{ github.sha }}
-          trigger-multiarch-image-build: true
-          multiarch-suffixes: |
-            -linux-amd64
-            -linux-arm64
-          enable-login: true
+
+      - name: Create and push multiarch manifest
+        run: |
+          docker buildx imagetools create \
+            --tag ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:ui-${{ github.sha }} \
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:ui-${{ github.sha }}-linux-amd64 \
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:ui-${{ github.sha }}-linux-arm64
 
   # API Image - Matrix Build
   build-api:
@@ -73,64 +71,64 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - linux-amd64
-          - linux-arm64
-    runs-on:
-      - non-api
-      - ${{ matrix.platform }}
-    continue-on-error: false
+        include:
+          - platform: linux-amd64
+            runner: ubuntu-latest
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: Generate GitHub App Token
         id: app-token
-        uses: razorpay/create-github-app-token@v1
+        uses: actions/create-github-app-token@v1
         with:
           app-id: ${{ secrets.WORKFLOWGATEKEEPER_APP_ID }}
           private-key: ${{ secrets.WORKFLOWGATEKEEPER_PRIVATEKEY }}
           owner: razorpay
           repositories: "ai-pr-reviewer,agent-skills"
 
-      - name: Build and push API image (${{ matrix.platform }})
-        uses: razorpay/actions/docker-image-build-push@master
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
         with:
+          registry: ${{ env.REGISTRY }}
           username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
           password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
-          registry: ${{ env.REGISTRY }}
-          repository: ${{ github.event.repository.name }}
-          custom-tag: api-${{ github.sha }}-${{ matrix.platform }}
-          enable-login: true
+
+      - uses: docker/build-push-action@v5
+        with:
           context: .
           file: build/docker/prod/Dockerfile.api
           push: true
+          tags: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:api-${{ github.sha }}-${{ matrix.platform }}
           build-args: |
             GIT_COMMIT_HASH=${{ github.sha }}
             GIT_USERNAME=rzp
             GITHUB_TOKEN=${{ steps.app-token.outputs.token }}
-          secrets: github_token=${{ steps.app-token.outputs.token }}
+          secrets: |
+            github_token=${{ steps.app-token.outputs.token }}
 
   build-api-multiarch:
     needs: [build-api]
     name: Build multiarch API image
-    runs-on:
-      - non-api
-      - linux-arm64
+    runs-on: ubuntu-latest
     steps:
-      - name: Combine Multi-Arch API Image
-        uses: razorpay/actions/docker-image-build-push@master
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
         with:
+          registry: ${{ env.REGISTRY }}
           username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
           password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
-          registry: ${{ env.REGISTRY }}
-          repository: ${{ github.event.repository.name }}
-          custom-tag: api-${{ github.sha }}
-          trigger-multiarch-image-build: true
-          multiarch-suffixes: |
-            -linux-amd64
-            -linux-arm64
-          enable-login: true
+
+      - name: Create and push multiarch manifest
+        run: |
+          docker buildx imagetools create \
+            --tag ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:api-${{ github.sha }} \
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:api-${{ github.sha }}-linux-amd64 \
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:api-${{ github.sha }}-linux-arm64
 
   # Task Execution Worker - Matrix Build
   build-task-execution-worker:
@@ -138,64 +136,64 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - linux-amd64
-          - linux-arm64
-    runs-on:
-      - non-api
-      - ${{ matrix.platform }}
-    continue-on-error: false
+        include:
+          - platform: linux-amd64
+            runner: ubuntu-latest
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: Generate GitHub App Token
         id: app-token
-        uses: razorpay/create-github-app-token@v1
+        uses: actions/create-github-app-token@v1
         with:
           app-id: ${{ secrets.WORKFLOWGATEKEEPER_APP_ID }}
           private-key: ${{ secrets.WORKFLOWGATEKEEPER_PRIVATEKEY }}
           owner: razorpay
           repositories: "ai-pr-reviewer,agent-skills,devstack-v2"
 
-      - name: Build and push Worker image (${{ matrix.platform }})
-        uses: razorpay/actions/docker-image-build-push@master
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
         with:
+          registry: ${{ env.REGISTRY }}
           username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
           password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
-          registry: ${{ env.REGISTRY }}
-          repository: ${{ github.event.repository.name }}
-          custom-tag: task-execution-worker-${{ github.sha }}-${{ matrix.platform }}
-          enable-login: true
+
+      - uses: docker/build-push-action@v5
+        with:
           context: .
           file: build/docker/prod/Dockerfile.worker.task_execution
           push: true
+          tags: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:task-execution-worker-${{ github.sha }}-${{ matrix.platform }}
           build-args: |
             GIT_COMMIT_HASH=${{ github.sha }}
             GIT_USERNAME=rzp
             GITHUB_TOKEN=${{ steps.app-token.outputs.token }}
-          secrets: github_token=${{ steps.app-token.outputs.token }}
+          secrets: |
+            github_token=${{ steps.app-token.outputs.token }}
 
   build-task-execution-worker-multiarch:
     needs: [build-task-execution-worker]
     name: Build multiarch task execution worker image
-    runs-on:
-      - non-api
-      - linux-arm64
+    runs-on: ubuntu-latest
     steps:
-      - name: Combine Multi-Arch Task Execution Worker Image
-        uses: razorpay/actions/docker-image-build-push@master
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
         with:
+          registry: ${{ env.REGISTRY }}
           username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
           password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
-          registry: ${{ env.REGISTRY }}
-          repository: ${{ github.event.repository.name }}
-          custom-tag: task-execution-worker-${{ github.sha }}
-          trigger-multiarch-image-build: true
-          multiarch-suffixes: |
-            -linux-amd64
-            -linux-arm64
-          enable-login: true
+
+      - name: Create and push multiarch manifest
+        run: |
+          docker buildx imagetools create \
+            --tag ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:task-execution-worker-${{ github.sha }} \
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:task-execution-worker-${{ github.sha }}-linux-amd64 \
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:task-execution-worker-${{ github.sha }}-linux-arm64
 
   # Code Review Worker - Matrix Build
   build-code-review-worker:
@@ -203,64 +201,64 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - linux-amd64
-          - linux-arm64
-    runs-on:
-      - non-api
-      - ${{ matrix.platform }}
-    continue-on-error: false
+        include:
+          - platform: linux-amd64
+            runner: ubuntu-latest
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: Generate GitHub App Token
         id: app-token
-        uses: razorpay/create-github-app-token@v1
+        uses: actions/create-github-app-token@v1
         with:
           app-id: ${{ secrets.WORKFLOWGATEKEEPER_APP_ID }}
           private-key: ${{ secrets.WORKFLOWGATEKEEPER_PRIVATEKEY }}
           owner: razorpay
           repositories: "ai-pr-reviewer,agent-skills"
 
-      - name: Build and push Code Review Worker image (${{ matrix.platform }})
-        uses: razorpay/actions/docker-image-build-push@master
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
         with:
+          registry: ${{ env.REGISTRY }}
           username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
           password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
-          registry: ${{ env.REGISTRY }}
-          repository: ${{ github.event.repository.name }}
-          custom-tag: code-review-worker-${{ github.sha }}-${{ matrix.platform }}
-          enable-login: true
+
+      - uses: docker/build-push-action@v5
+        with:
           context: .
           file: build/docker/prod/Dockerfile.worker.code_review
           push: true
+          tags: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:code-review-worker-${{ github.sha }}-${{ matrix.platform }}
           build-args: |
             GIT_COMMIT_HASH=${{ github.sha }}
             GIT_USERNAME=rzp
             GITHUB_TOKEN=${{ steps.app-token.outputs.token }}
-          secrets: github_token=${{ steps.app-token.outputs.token }}
+          secrets: |
+            github_token=${{ steps.app-token.outputs.token }}
 
   build-code-review-worker-multiarch:
     needs: [build-code-review-worker]
     name: Build multiarch code review worker image
-    runs-on:
-      - non-api
-      - linux-arm64
+    runs-on: ubuntu-latest
     steps:
-      - name: Combine Multi-Arch Code Review Worker Image
-        uses: razorpay/actions/docker-image-build-push@master
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
         with:
+          registry: ${{ env.REGISTRY }}
           username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
           password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
-          registry: ${{ env.REGISTRY }}
-          repository: ${{ github.event.repository.name }}
-          custom-tag: code-review-worker-${{ github.sha }}
-          trigger-multiarch-image-build: true
-          multiarch-suffixes: |
-            -linux-amd64
-            -linux-arm64
-          enable-login: true
+
+      - name: Create and push multiarch manifest
+        run: |
+          docker buildx imagetools create \
+            --tag ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:code-review-worker-${{ github.sha }} \
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:code-review-worker-${{ github.sha }}-linux-amd64 \
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:code-review-worker-${{ github.sha }}-linux-arm64
 
   # Comment Analyzer Worker - Matrix Build
   build-comment-analyzer-worker:
@@ -268,64 +266,64 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - linux-amd64
-          - linux-arm64
-    runs-on:
-      - non-api
-      - ${{ matrix.platform }}
-    continue-on-error: false
+        include:
+          - platform: linux-amd64
+            runner: ubuntu-latest
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: Generate GitHub App Token
         id: app-token
-        uses: razorpay/create-github-app-token@v1
+        uses: actions/create-github-app-token@v1
         with:
           app-id: ${{ secrets.WORKFLOWGATEKEEPER_APP_ID }}
           private-key: ${{ secrets.WORKFLOWGATEKEEPER_PRIVATEKEY }}
           owner: razorpay
           repositories: "ai-pr-reviewer"
 
-      - name: Build and push Comment Analyzer Worker image (${{ matrix.platform }})
-        uses: razorpay/actions/docker-image-build-push@master
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
         with:
+          registry: ${{ env.REGISTRY }}
           username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
           password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
-          registry: ${{ env.REGISTRY }}
-          repository: ${{ github.event.repository.name }}
-          custom-tag: comment-analyzer-worker-${{ github.sha }}-${{ matrix.platform }}
-          enable-login: true
+
+      - uses: docker/build-push-action@v5
+        with:
           context: .
           file: build/docker/prod/Dockerfile.worker.comment_analyzer
           push: true
+          tags: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:comment-analyzer-worker-${{ github.sha }}-${{ matrix.platform }}
           build-args: |
             GIT_COMMIT_HASH=${{ github.sha }}
             GIT_USERNAME=rzp
             GITHUB_TOKEN=${{ steps.app-token.outputs.token }}
-          secrets: github_token=${{ steps.app-token.outputs.token }}
+          secrets: |
+            github_token=${{ steps.app-token.outputs.token }}
 
   build-comment-analyzer-worker-multiarch:
     needs: [build-comment-analyzer-worker]
     name: Build multiarch comment analyzer worker image
-    runs-on:
-      - non-api
-      - linux-arm64
+    runs-on: ubuntu-latest
     steps:
-      - name: Combine Multi-Arch Comment Analyzer Worker Image
-        uses: razorpay/actions/docker-image-build-push@master
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
         with:
+          registry: ${{ env.REGISTRY }}
           username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
           password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
-          registry: ${{ env.REGISTRY }}
-          repository: ${{ github.event.repository.name }}
-          custom-tag: comment-analyzer-worker-${{ github.sha }}
-          trigger-multiarch-image-build: true
-          multiarch-suffixes: |
-            -linux-amd64
-            -linux-arm64
-          enable-login: true
+
+      - name: Create and push multiarch manifest
+        run: |
+          docker buildx imagetools create \
+            --tag ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:comment-analyzer-worker-${{ github.sha }} \
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:comment-analyzer-worker-${{ github.sha }}-linux-amd64 \
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:comment-analyzer-worker-${{ github.sha }}-linux-arm64
 
   # MCP Server - Matrix Build
   build-mcp:
@@ -333,127 +331,128 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - linux-amd64
-          - linux-arm64
-    runs-on:
-      - non-api
-      - ${{ matrix.platform }}
-    continue-on-error: false
+        include:
+          - platform: linux-amd64
+            runner: ubuntu-latest
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
       - name: Generate GitHub App Token
         id: app-token
-        uses: razorpay/create-github-app-token@v1
+        uses: actions/create-github-app-token@v1
         with:
           app-id: ${{ secrets.WORKFLOWGATEKEEPER_APP_ID }}
           private-key: ${{ secrets.WORKFLOWGATEKEEPER_PRIVATEKEY }}
           owner: razorpay
           repositories: "ai-pr-reviewer,agent-skills"
 
-      - name: Build and push MCP image (${{ matrix.platform }})
-        uses: razorpay/actions/docker-image-build-push@master
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
         with:
+          registry: ${{ env.REGISTRY }}
           username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
           password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
-          registry: ${{ env.REGISTRY }}
-          repository: ${{ github.event.repository.name }}
-          custom-tag: mcp-${{ github.sha }}-${{ matrix.platform }}
-          enable-login: true
+
+      - uses: docker/build-push-action@v5
+        with:
           context: .
           file: build/docker/prod/Dockerfile.mcp_server
           push: true
+          tags: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:mcp-${{ github.sha }}-${{ matrix.platform }}
           build-args: |
             GIT_COMMIT_HASH=${{ github.sha }}
             GIT_USERNAME=rzp
             GITHUB_TOKEN=${{ steps.app-token.outputs.token }}
-          secrets: github_token=${{ steps.app-token.outputs.token }}
+          secrets: |
+            github_token=${{ steps.app-token.outputs.token }}
 
+  build-mcp-multiarch:
+    needs: [build-mcp]
+    name: Build multiarch MCP image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
+          password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
+
+      - name: Create and push multiarch manifest
+        run: |
+          docker buildx imagetools create \
+            --tag ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:mcp-${{ github.sha }} \
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:mcp-${{ github.sha }}-linux-amd64 \
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:mcp-${{ github.sha }}-linux-arm64
+
+  # Scheduler Worker - Matrix Build
   build-scheduler-worker:
     name: Build Scheduler Worker Image
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - linux-amd64
-          - linux-arm64
-    runs-on:
-      - non-api
-      - ${{ matrix.platform }}
-    continue-on-error: false
+        include:
+          - platform: linux-amd64
+            runner: ubuntu-latest
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
 
       - name: Generate GitHub App Token
         id: app-token
-        uses: razorpay/create-github-app-token@v1
+        uses: actions/create-github-app-token@v1
         with:
           app-id: ${{ secrets.WORKFLOWGATEKEEPER_APP_ID }}
           private-key: ${{ secrets.WORKFLOWGATEKEEPER_PRIVATEKEY }}
           owner: razorpay
           repositories: "ai-pr-reviewer"
 
-      - name: Build and push Scheduler Worker image (${{ matrix.platform }})
-        uses: razorpay/actions/docker-image-build-push@master
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
         with:
+          registry: ${{ env.REGISTRY }}
           username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
           password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
-          registry: ${{ env.REGISTRY }}
-          repository: ${{ github.event.repository.name }}
-          custom-tag: scheduler-${{ github.sha }}-${{ matrix.platform }}
-          enable-login: true
+
+      - uses: docker/build-push-action@v5
+        with:
           context: .
           file: build/docker/prod/Dockerfile.worker.scheduler
           push: true
+          tags: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:scheduler-${{ github.sha }}-${{ matrix.platform }}
           build-args: |
             GIT_COMMIT_HASH=${{ github.sha }}
             GIT_USERNAME=rzp
-          secrets: github_token=${{ steps.app-token.outputs.token }}
+          secrets: |
+            github_token=${{ steps.app-token.outputs.token }}
 
   build-scheduler-worker-multiarch:
     needs: [build-scheduler-worker]
     name: Build multiarch scheduler worker image
-    runs-on:
-      - non-api
-      - linux-arm64
+    runs-on: ubuntu-latest
     steps:
-      - name: Combine Multi-Arch Scheduler Worker Image
-        uses: razorpay/actions/docker-image-build-push@master
-        with:
-          username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
-          password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
-          registry: ${{ env.REGISTRY }}
-          repository: ${{ github.event.repository.name }}
-          custom-tag: scheduler-${{ github.sha }}
-          trigger-multiarch-image-build: true
-          multiarch-suffixes: |
-            -linux-amd64
-            -linux-arm64
-          enable-login: true
+      - uses: docker/setup-buildx-action@v3
 
-  build-mcp-multiarch:
-    needs: [build-mcp]
-    name: Build multiarch MCP image
-    runs-on:
-      - non-api
-      - linux-arm64
-    steps:
-      - name: Combine Multi-Arch MCP Image
-        uses: razorpay/actions/docker-image-build-push@master
+      - uses: docker/login-action@v3
         with:
+          registry: ${{ env.REGISTRY }}
           username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
           password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
-          registry: ${{ env.REGISTRY }}
-          repository: ${{ github.event.repository.name }}
-          custom-tag: mcp-${{ github.sha }}
-          trigger-multiarch-image-build: true
-          multiarch-suffixes: |
-            -linux-amd64
-            -linux-arm64
-          enable-login: true
+
+      - name: Create and push multiarch manifest
+        run: |
+          docker buildx imagetools create \
+            --tag ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:scheduler-${{ github.sha }} \
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:scheduler-${{ github.sha }}-linux-amd64 \
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:scheduler-${{ github.sha }}-linux-arm64
 
   # Webhook Receiver - Matrix Build
   build-webhook-receiver:
@@ -461,29 +460,29 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform:
-          - linux-amd64
-          - linux-arm64
-    runs-on:
-      - non-api
-      - ${{ matrix.platform }}
-    continue-on-error: false
+        include:
+          - platform: linux-amd64
+            runner: ubuntu-latest
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
-      - name: Build and push Webhook Receiver image (${{ matrix.platform }})
-        uses: razorpay/actions/docker-image-build-push@master
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
         with:
+          registry: ${{ env.REGISTRY }}
           username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
           password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
-          registry: ${{ env.REGISTRY }}
-          repository: ${{ github.event.repository.name }}
-          custom-tag: webhook-receiver-${{ github.sha }}-${{ matrix.platform }}
-          enable-login: true
+
+      - uses: docker/build-push-action@v5
+        with:
           context: .
           file: build/docker/prod/Dockerfile.webhook_receiver
           push: true
+          tags: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:webhook-receiver-${{ github.sha }}-${{ matrix.platform }}
           build-args: |
             GIT_COMMIT_HASH=${{ github.sha }}
             GIT_USERNAME=rzp
@@ -491,28 +490,27 @@ jobs:
   build-webhook-receiver-multiarch:
     needs: [build-webhook-receiver]
     name: Build multiarch webhook receiver image
-    runs-on:
-      - non-api
-      - linux-arm64
+    runs-on: ubuntu-latest
     steps:
-      - name: Combine Multi-Arch Webhook Receiver Image
-        uses: razorpay/actions/docker-image-build-push@master
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
         with:
+          registry: ${{ env.REGISTRY }}
           username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
           password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
-          registry: ${{ env.REGISTRY }}
-          repository: ${{ github.event.repository.name }}
-          custom-tag: webhook-receiver-${{ github.sha }}
-          trigger-multiarch-image-build: true
-          multiarch-suffixes: |
-            -linux-amd64
-            -linux-arm64
-          enable-login: true
+
+      - name: Create and push multiarch manifest
+        run: |
+          docker buildx imagetools create \
+            --tag ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:webhook-receiver-${{ github.sha }} \
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:webhook-receiver-${{ github.sha }}-linux-amd64 \
+            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:webhook-receiver-${{ github.sha }}-linux-arm64
 
   # Build status check
   build-status:
     name: Build Status Check
-    runs-on: [self-hosted, non-api]
+    runs-on: ubuntu-latest
     needs:
       - build-ui-multiarch
       - build-api-multiarch
@@ -526,12 +524,18 @@ jobs:
     steps:
       - name: Check build results
         run: |
-          if [[ "${{ needs.build-ui-multiarch.result }}" == "success" && "${{ needs.build-api-multiarch.result }}" == "success" && "${{ needs.build-task-execution-worker-multiarch.result }}" == "success" && "${{ needs.build-code-review-worker-multiarch.result }}" == "success" && "${{ needs.build-comment-analyzer-worker-multiarch.result }}" == "success" && "${{ needs.build-mcp-multiarch.result }}" == "success" && "${{ needs.build-scheduler-worker-multiarch.result }}" == "success" && "${{ needs.build-webhook-receiver-multiarch.result }}" == "success" ]]; then
-            echo "✅ All multiarch builds successful"
-            echo "🎉 Multi-platform build complete with Harbor caching enabled!"
+          if [[ "${{ needs.build-ui-multiarch.result }}" == "success" && \
+                "${{ needs.build-api-multiarch.result }}" == "success" && \
+                "${{ needs.build-task-execution-worker-multiarch.result }}" == "success" && \
+                "${{ needs.build-code-review-worker-multiarch.result }}" == "success" && \
+                "${{ needs.build-comment-analyzer-worker-multiarch.result }}" == "success" && \
+                "${{ needs.build-mcp-multiarch.result }}" == "success" && \
+                "${{ needs.build-scheduler-worker-multiarch.result }}" == "success" && \
+                "${{ needs.build-webhook-receiver-multiarch.result }}" == "success" ]]; then
+            echo "All multiarch builds successful"
             exit 0
           else
-            echo "❌ One or more multiarch builds failed:"
+            echo "One or more multiarch builds failed:"
             echo "  UI: ${{ needs.build-ui-multiarch.result }}"
             echo "  API: ${{ needs.build-api-multiarch.result }}"
             echo "  Task Execution Worker: ${{ needs.build-task-execution-worker-multiarch.result }}"
