@@ -8,5 +8,8 @@ on:
 
 jobs:
   claude:
-    uses: razorpay/actions/.github/workflows/claude-code.yml@master
-    secrets: inherit
+    # Disabled: calls private Razorpay internal workflow not accessible outside org
+    if: false
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "disabled"
