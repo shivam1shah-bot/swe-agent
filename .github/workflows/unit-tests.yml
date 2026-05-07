@@ -12,7 +12,7 @@ env:
 jobs:
   unit-tests:
     name: Run Unit Tests
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -25,7 +25,7 @@ jobs:
 
       - name: Generate GitHub App Token
         id: app-token
-        uses: razorpay/create-github-app-token@v1
+        uses: actions/create-github-app-token@v1
         with:
           app-id: ${{ secrets.WORKFLOWGATEKEEPER_APP_ID }}
           private-key: ${{ secrets.WORKFLOWGATEKEEPER_PRIVATEKEY }}

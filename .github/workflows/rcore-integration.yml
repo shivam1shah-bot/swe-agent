@@ -31,9 +31,8 @@ concurrency:
   cancel-in-progress: true
 jobs:
   rCoRe:
-    # Skip bot-triggered runs to prevent feedback loops
-    if: github.actor != 'rzp-code-review[bot]' && github.actor != 'github-actions[bot]'
-    uses: razorpay/actions/.github/workflows/rcore-suite.yml@master
-    with:
-      runner_name: ${{ vars.RCORE_RUNNER_NAME || 'self-hosted' }}
-    secrets: inherit
+    # Disabled: references private Razorpay internal workflow not accessible outside org
+    if: false
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "disabled"
