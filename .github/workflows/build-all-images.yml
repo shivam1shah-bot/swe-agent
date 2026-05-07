@@ -4,8 +4,7 @@ on:
   [push]
 
 env:
-  REGISTRY: c.rzp.io
-  NAMESPACE: razorpay
+  IMAGE_NAME: ${{ github.repository }}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -31,16 +30,15 @@ jobs:
 
       - uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
-          password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - uses: docker/build-push-action@v5
         with:
           context: .
           file: build/docker/prod/Dockerfile.ui
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:ui-${{ github.sha }}-${{ matrix.platform }}
+          tags: ${{ env.IMAGE_NAME }}:ui-${{ github.sha }}-${{ matrix.platform }}
           build-args: |
             GIT_COMMIT_HASH=${{ github.sha }}
             GIT_USERNAME=rzp
@@ -54,16 +52,15 @@ jobs:
 
       - uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
-          password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Create and push multiarch manifest
         run: |
           docker buildx imagetools create \
-            --tag ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:ui-${{ github.sha }} \
-            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:ui-${{ github.sha }}-linux-amd64 \
-            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:ui-${{ github.sha }}-linux-arm64
+            --tag ${{ env.IMAGE_NAME }}:ui-${{ github.sha }} \
+            ${{ env.IMAGE_NAME }}:ui-${{ github.sha }}-linux-amd64 \
+            ${{ env.IMAGE_NAME }}:ui-${{ github.sha }}-linux-arm64
 
   # API Image - Matrix Build
   build-api:
@@ -93,16 +90,15 @@ jobs:
 
       - uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
-          password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - uses: docker/build-push-action@v5
         with:
           context: .
           file: build/docker/prod/Dockerfile.api
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:api-${{ github.sha }}-${{ matrix.platform }}
+          tags: ${{ env.IMAGE_NAME }}:api-${{ github.sha }}-${{ matrix.platform }}
           build-args: |
             GIT_COMMIT_HASH=${{ github.sha }}
             GIT_USERNAME=rzp
@@ -119,16 +115,15 @@ jobs:
 
       - uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
-          password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Create and push multiarch manifest
         run: |
           docker buildx imagetools create \
-            --tag ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:api-${{ github.sha }} \
-            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:api-${{ github.sha }}-linux-amd64 \
-            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:api-${{ github.sha }}-linux-arm64
+            --tag ${{ env.IMAGE_NAME }}:api-${{ github.sha }} \
+            ${{ env.IMAGE_NAME }}:api-${{ github.sha }}-linux-amd64 \
+            ${{ env.IMAGE_NAME }}:api-${{ github.sha }}-linux-arm64
 
   # Task Execution Worker - Matrix Build
   build-task-execution-worker:
@@ -158,16 +153,15 @@ jobs:
 
       - uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
-          password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - uses: docker/build-push-action@v5
         with:
           context: .
           file: build/docker/prod/Dockerfile.worker.task_execution
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:task-execution-worker-${{ github.sha }}-${{ matrix.platform }}
+          tags: ${{ env.IMAGE_NAME }}:task-execution-worker-${{ github.sha }}-${{ matrix.platform }}
           build-args: |
             GIT_COMMIT_HASH=${{ github.sha }}
             GIT_USERNAME=rzp
@@ -184,16 +178,15 @@ jobs:
 
       - uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
-          password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Create and push multiarch manifest
         run: |
           docker buildx imagetools create \
-            --tag ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:task-execution-worker-${{ github.sha }} \
-            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:task-execution-worker-${{ github.sha }}-linux-amd64 \
-            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:task-execution-worker-${{ github.sha }}-linux-arm64
+            --tag ${{ env.IMAGE_NAME }}:task-execution-worker-${{ github.sha }} \
+            ${{ env.IMAGE_NAME }}:task-execution-worker-${{ github.sha }}-linux-amd64 \
+            ${{ env.IMAGE_NAME }}:task-execution-worker-${{ github.sha }}-linux-arm64
 
   # Code Review Worker - Matrix Build
   build-code-review-worker:
@@ -223,16 +216,15 @@ jobs:
 
       - uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
-          password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - uses: docker/build-push-action@v5
         with:
           context: .
           file: build/docker/prod/Dockerfile.worker.code_review
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:code-review-worker-${{ github.sha }}-${{ matrix.platform }}
+          tags: ${{ env.IMAGE_NAME }}:code-review-worker-${{ github.sha }}-${{ matrix.platform }}
           build-args: |
             GIT_COMMIT_HASH=${{ github.sha }}
             GIT_USERNAME=rzp
@@ -249,16 +241,15 @@ jobs:
 
       - uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
-          password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Create and push multiarch manifest
         run: |
           docker buildx imagetools create \
-            --tag ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:code-review-worker-${{ github.sha }} \
-            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:code-review-worker-${{ github.sha }}-linux-amd64 \
-            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:code-review-worker-${{ github.sha }}-linux-arm64
+            --tag ${{ env.IMAGE_NAME }}:code-review-worker-${{ github.sha }} \
+            ${{ env.IMAGE_NAME }}:code-review-worker-${{ github.sha }}-linux-amd64 \
+            ${{ env.IMAGE_NAME }}:code-review-worker-${{ github.sha }}-linux-arm64
 
   # Comment Analyzer Worker - Matrix Build
   build-comment-analyzer-worker:
@@ -288,16 +279,15 @@ jobs:
 
       - uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
-          password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - uses: docker/build-push-action@v5
         with:
           context: .
           file: build/docker/prod/Dockerfile.worker.comment_analyzer
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:comment-analyzer-worker-${{ github.sha }}-${{ matrix.platform }}
+          tags: ${{ env.IMAGE_NAME }}:comment-analyzer-worker-${{ github.sha }}-${{ matrix.platform }}
           build-args: |
             GIT_COMMIT_HASH=${{ github.sha }}
             GIT_USERNAME=rzp
@@ -314,16 +304,15 @@ jobs:
 
       - uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
-          password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Create and push multiarch manifest
         run: |
           docker buildx imagetools create \
-            --tag ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:comment-analyzer-worker-${{ github.sha }} \
-            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:comment-analyzer-worker-${{ github.sha }}-linux-amd64 \
-            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:comment-analyzer-worker-${{ github.sha }}-linux-arm64
+            --tag ${{ env.IMAGE_NAME }}:comment-analyzer-worker-${{ github.sha }} \
+            ${{ env.IMAGE_NAME }}:comment-analyzer-worker-${{ github.sha }}-linux-amd64 \
+            ${{ env.IMAGE_NAME }}:comment-analyzer-worker-${{ github.sha }}-linux-arm64
 
   # MCP Server - Matrix Build
   build-mcp:
@@ -353,16 +342,15 @@ jobs:
 
       - uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
-          password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - uses: docker/build-push-action@v5
         with:
           context: .
           file: build/docker/prod/Dockerfile.mcp_server
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:mcp-${{ github.sha }}-${{ matrix.platform }}
+          tags: ${{ env.IMAGE_NAME }}:mcp-${{ github.sha }}-${{ matrix.platform }}
           build-args: |
             GIT_COMMIT_HASH=${{ github.sha }}
             GIT_USERNAME=rzp
@@ -379,16 +367,15 @@ jobs:
 
       - uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
-          password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Create and push multiarch manifest
         run: |
           docker buildx imagetools create \
-            --tag ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:mcp-${{ github.sha }} \
-            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:mcp-${{ github.sha }}-linux-amd64 \
-            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:mcp-${{ github.sha }}-linux-arm64
+            --tag ${{ env.IMAGE_NAME }}:mcp-${{ github.sha }} \
+            ${{ env.IMAGE_NAME }}:mcp-${{ github.sha }}-linux-amd64 \
+            ${{ env.IMAGE_NAME }}:mcp-${{ github.sha }}-linux-arm64
 
   # Scheduler Worker - Matrix Build
   build-scheduler-worker:
@@ -418,16 +405,15 @@ jobs:
 
       - uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
-          password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - uses: docker/build-push-action@v5
         with:
           context: .
           file: build/docker/prod/Dockerfile.worker.scheduler
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:scheduler-${{ github.sha }}-${{ matrix.platform }}
+          tags: ${{ env.IMAGE_NAME }}:scheduler-${{ github.sha }}-${{ matrix.platform }}
           build-args: |
             GIT_COMMIT_HASH=${{ github.sha }}
             GIT_USERNAME=rzp
@@ -443,16 +429,15 @@ jobs:
 
       - uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
-          password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Create and push multiarch manifest
         run: |
           docker buildx imagetools create \
-            --tag ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:scheduler-${{ github.sha }} \
-            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:scheduler-${{ github.sha }}-linux-amd64 \
-            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:scheduler-${{ github.sha }}-linux-arm64
+            --tag ${{ env.IMAGE_NAME }}:scheduler-${{ github.sha }} \
+            ${{ env.IMAGE_NAME }}:scheduler-${{ github.sha }}-linux-amd64 \
+            ${{ env.IMAGE_NAME }}:scheduler-${{ github.sha }}-linux-arm64
 
   # Webhook Receiver - Matrix Build
   build-webhook-receiver:
@@ -473,16 +458,15 @@ jobs:
 
       - uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
-          password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - uses: docker/build-push-action@v5
         with:
           context: .
           file: build/docker/prod/Dockerfile.webhook_receiver
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:webhook-receiver-${{ github.sha }}-${{ matrix.platform }}
+          tags: ${{ env.IMAGE_NAME }}:webhook-receiver-${{ github.sha }}-${{ matrix.platform }}
           build-args: |
             GIT_COMMIT_HASH=${{ github.sha }}
             GIT_USERNAME=rzp
@@ -496,16 +480,15 @@ jobs:
 
       - uses: docker/login-action@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.HARBOR_DOCKER_USERNAME }}
-          password: ${{ secrets.HARBOR_DOCKER_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Create and push multiarch manifest
         run: |
           docker buildx imagetools create \
-            --tag ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:webhook-receiver-${{ github.sha }} \
-            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:webhook-receiver-${{ github.sha }}-linux-amd64 \
-            ${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ github.event.repository.name }}:webhook-receiver-${{ github.sha }}-linux-arm64
+            --tag ${{ env.IMAGE_NAME }}:webhook-receiver-${{ github.sha }} \
+            ${{ env.IMAGE_NAME }}:webhook-receiver-${{ github.sha }}-linux-amd64 \
+            ${{ env.IMAGE_NAME }}:webhook-receiver-${{ github.sha }}-linux-arm64
 
   # Build status check
   build-status:
